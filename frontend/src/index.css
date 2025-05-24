@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+
+@theme {
+    --color-purple-light: var(--color-purple-400)
+    --color-purple-dark: var(--color-purple-600)
+
+}
+:root {
+    --purple-light: #d9ddee;
+    --purple-dark: #7164c0;
+}
