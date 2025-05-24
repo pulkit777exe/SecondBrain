@@ -1,193 +1,27 @@
-import express from "express";
-import { random } from "./utils/utils";
-import jwt from "jsonwebtoken";
-import { ContentModel, LinkModel, UserModel } from "./db/db";
-import { userMiddleware } from "./middleware";
-import cors from "cors";
-import dotenv from "dotenv";
+import express from 'express'
+import dotenv from 'dotenv'
+import { UserRouter } from './routes/UserRouter'
+import { ContentRouter } from './routes/ContentRouter'
+import { BrainRouter } from './routes/BrainRouter'
+import cors from 'cors'
 dotenv.config();
 
-const app = express();
-app.use(express.json());
-app.use(cors());
+const PORT = process.env.PORT || 3000
 
-app.post("/api/v1/signup", async (req, res) => {
-    const { username, password } = req.body;
+const app = express()
 
-    if (!username || !password) {
-        res.status(400).json({
-            message: "Username and password are required"
-        });
-        return;
-    }
+app.use(cors({
+    origin: ['https://secondbrain-fe.vercel.app', 'http://localhost:5173']
+}))
+app.use(express.json())
+app.use('/v1/user', UserRouter)
+app.use('/v1/content', ContentRouter)
+app.use('/v1/brain', BrainRouter)
 
-    try {
-        await UserModel.create({
-            username,
-            password
-        });
-
-        res.json({
-            message: "User signed up"
-        });
-    } catch (e) {
-        res.status(409).json({
-            message: "User already exists"
-        });
-    }
-});
-
-app.post("/api/v1/signin", async (req, res) => {
-    const username = req.body.username;
-    const password = req.body.password;
-
-    const existingUser = await UserModel.findOne({
-        username,
-        password
-    })
-    if (existingUser) {
-        const token = jwt.sign({
-            id: existingUser._id
-        }, process.env.JWT_PASSWORD as unknown as string)
-
-        res.json({
-            token
-        })
-    } else {
-        res.status(403).json({
-            message: "Incorrrect credentials"
-        })
-    }
-})
-
-app.post("/api/v1/content", userMiddleware, async (req, res) => {
-    const link = req.body.link;
-    const type = req.body.type;
-    await ContentModel.create({
-        link,
-        type,
-        title: req.body.title,
-        // @ts-ignore
-        userId: req.userId,
-        tags: []
-    })
-
-    res.json({
-        message: "Content added"
-    })
-    
-})
-
-app.get("/api/v1/content", userMiddleware, async (req, res) => {
-    // @ts-ignore
-    const userId = req.userId;
-    const content = await ContentModel.find({
-        userId: userId
-    }).populate("userId", "username")
-    res.json({
-        content
+app.get('/', (req, res) => {
+    res.status(200).json({
+        message: "SecondBrain Test"
     })
 })
 
-app.delete("/api/v1/content", userMiddleware, async (req, res) => {
-    const contentId = req.body.contentId;
-
-    await ContentModel.deleteMany({
-        contentId,
-        // @ts-ignore
-        userId: req.userId
-    })
-
-    res.json({
-        message: "Deleted"
-    })
-})
-
-app.post("/api/v1/brain/share", userMiddleware, async (req, res) => {
-    const share = req.body.share;
-    if (share) {
-            const existingLink = await LinkModel.findOne({
-                // @ts-ignore
-                userId: req.userId
-            });
-
-            if (existingLink) {
-                res.json({
-                    hash: existingLink.hash
-                })
-                return;
-            }
-            const hash = random(10);
-            await LinkModel.create({
-                // @ts-ignore
-                userId: req.userId,
-                hash: hash
-            })
-
-            res.json({
-                hash
-            })
-    } else {
-        await LinkModel.deleteOne({
-            // @ts-ignore
-            userId: req.userId
-        });
-
-        res.json({
-            message: "Removed link"
-        })
-    }
-})
-
-app.get("/api/v1/brain/:shareLink", async (req, res) => {
-    const hash = req.params.shareLink;
-
-    const link = await LinkModel.findOne({
-        hash
-    });
-
-    if (!link) {
-        res.status(411).json({
-            message: "Sorry incorrect input"
-        })
-        return;
-    }
-    // userId
-    const content = await ContentModel.find({
-        userId: link.userId
-    })
-
-    console.log(link);
-    const user = await UserModel.findOne({
-        _id: link.userId
-    })
-
-    if (!user) {
-        res.status(411).json({
-            message: "user not found, error should ideally not happen"
-        })
-        return;
-    }
-
-    res.json({
-        username: user.username,
-        content: content
-    })
-
-})
-
-app.delete("/api/v1/content/:contentId", userMiddleware, async (req,res) => {
-    const contentId = req.params.contentId;
-    if (!contentId) {
-        res.json({
-            message: "This is not allowed"
-        })
-    }
-    try {
-        // do something
-    } catch (error) {
-        console.error(error);
-    }
-})
-
-app.listen(3000);
+app.listen(PORT)
