@@ -54,7 +54,9 @@ UserRouter.post("/login", async (req: Request, res: Response) => {
                 if (match) {
                     const token = jwt.sign({
                         id: existingUser._id
-                    }, process.env.JWT_SECRET as unknown as string)
+                    }, process.env.JWT_SECRET as unknown as string, {
+                        expiresIn: "7d"
+                    })
                     
                     res.status(200).json({
                         message: "Login Successful, token created and set",

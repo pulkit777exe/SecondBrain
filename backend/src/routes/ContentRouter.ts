@@ -1,43 +1,56 @@
 import { Request, Response, Router } from "express";
 import { authMiddleware } from "../middleware/authMiddleware";
-import { ContentSchema } from "../types/Schemas";
+import { ContentSchema, CreateContentSchema } from "../types/Schemas";
 import { ProcessTags } from "../utils/ProcessTag";
 import { QdrantDelete, QdrantSearch, QdrantUpsertPoints } from "../utils/QdrantProcessing";
 import { ContentModel } from "../db/db";
 import { getEmbeddings } from "../utils/TextEmbedding";
+import { v4 as uuidv4 } from "uuid";
 
 export const ContentRouter = Router();
 
+function generateContentId(): string {
+    return uuidv4();
+}
+
 ContentRouter.post("/", authMiddleware, async (req: Request, res: Response) => {
     try {
-        const {success, data, error} = ContentSchema.safeParse(req.body);
+        const {success, data, error} = CreateContentSchema.safeParse(req.body);
         if (!success) {
             res.status(411).json({
                 message: "Error in inputs",
                 error: error.errors
             })
-
-            return ;
+            return;
         }
-        await ProcessTags(data.tags);
-        await QdrantUpsertPoints(data);
+
+        const contentId = generateContentId();
+        const userId = req.userId;
+
+        if (!userId) {
+            res.status(401).json({ message: "Unauthorized" });
+            return;
+        }
+
+        const tags = data.tags || [];
+        await ProcessTags(tags);
+        await QdrantUpsertPoints({ title: data.title, contentId, tags });
 
         await ContentModel.create({
-            contentId: data.contentId,
+            contentId,
             link: data.link,
             type: data.type,
             title: data.title,
-            tags: data.tags,
-            //@ts-ignore
-            userId: data.userId
+            tags,
+            userId
         });
         res.status(200).json({
             content: {
                 link: data.link,
                 type: data.type,
                 title: data.title,
-                tags: data.tags,
-                contentId: data.contentId
+                tags,
+                contentId
             }
         })
     } catch (err) {
@@ -51,10 +64,13 @@ ContentRouter.post("/", authMiddleware, async (req: Request, res: Response) => {
 
 ContentRouter.get("/", authMiddleware, async (req: Request, res: Response) => {
     try {
-       const allContent = await ContentModel.find({
-             // @ts-ignore
-            userId: req.userId, 
-        })
+        const userId = req.userId;
+        if (!userId) {
+            res.status(401).json({ message: "Unauthorized" });
+            return;
+        }
+
+        const allContent = await ContentModel.find({ userId })
             .populate("userId", "username")
             .populate("tags", "title");
 
@@ -72,6 +88,7 @@ ContentRouter.get("/", authMiddleware, async (req: Request, res: Response) => {
 ContentRouter.delete('/', authMiddleware, async (req: Request, res: Response) => {
     try {
         const contentId = req.body.contentId;
+        const userId = req.userId;
 
         if (!contentId) {
             res.status(400).json({
@@ -80,12 +97,13 @@ ContentRouter.delete('/', authMiddleware, async (req: Request, res: Response) =>
             return;
         }
 
-        await ContentModel.deleteOne({
-            contentId: contentId,
-             // @ts-ignore
-            userId: req.userId, 
-        });
-        await QdrantDelete(contentId)
+        if (!userId) {
+            res.status(401).json({ message: "Unauthorized" });
+            return;
+        }
+
+        await ContentModel.deleteOne({ contentId, userId });
+        await QdrantDelete(contentId);
         res.status(200).json({
             message: "Deleted",
         });
@@ -99,7 +117,7 @@ ContentRouter.delete('/', authMiddleware, async (req: Request, res: Response) =>
 
 ContentRouter.put('/', authMiddleware, async (req: Request, res: Response) => {
     try {
-        const { success, data, error } = ContentSchema.safeParse(req.body);
+        const { success, data, error } = CreateContentSchema.safeParse(req.body);
 
         if (!success) {
             res.status(411).json({
@@ -110,6 +128,7 @@ ContentRouter.put('/', authMiddleware, async (req: Request, res: Response) => {
         }
 
         const contentId = req.body.contentId;
+        const userId = req.userId;
 
         if (!contentId) {
             res.status(400).json({
@@ -117,17 +136,19 @@ ContentRouter.put('/', authMiddleware, async (req: Request, res: Response) => {
             });
             return;
         }
+
+        if (!userId) {
+            res.status(401).json({ message: "Unauthorized" });
+            return;
+        }
+
         const updatedContent = await ContentModel.findOneAndUpdate(
-            {
-                contentId: contentId,
-                 // @ts-ignore
-                userId: req.userId,
-            },
+            { contentId, userId },
             {
                 link: data.link,
                 type: data.type,
                 title: data.title,
-                tags: data.tags,
+                tags: data.tags || [],
             },
             { new: true }
         );
@@ -139,7 +160,7 @@ ContentRouter.put('/', authMiddleware, async (req: Request, res: Response) => {
             return;
         }
 
-        await QdrantUpsertPoints(data)
+        await QdrantUpsertPoints({ title: data.title, contentId, tags: data.tags })
         res.status(200).json({
             message: "Content updated successfully",
             updatedContent,
@@ -153,11 +174,22 @@ ContentRouter.put('/', authMiddleware, async (req: Request, res: Response) => {
     }
 });
 
-ContentRouter.post('/search', authMiddleware, async(req,res) => {
-    const searchQuery = req.body.search
-    const queryEmbeddings = await getEmbeddings(searchQuery)
-    const response = await QdrantSearch(queryEmbeddings)
+ContentRouter.post('/search', authMiddleware, async(req, res) => {
+    const userId = req.userId;
+    if (!userId) {
+        res.status(401).json({ message: "Unauthorized" });
+        return;
+    }
+
+    const searchQuery = req.body.search;
+    if (!searchQuery) {
+        res.status(400).json({ message: "Search query required" });
+        return;
+    }
+
+    const queryEmbeddings = await getEmbeddings(searchQuery);
+    const response = await QdrantSearch(queryEmbeddings);
     res.status(200).json({
         search: response
-    })
-})
+    });
+});

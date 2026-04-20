@@ -1,18 +1,25 @@
-import { ContentType } from "../types/Schemas";
+interface QdrantPayload {
+    title: string;
+    contentId?: string;
+    tags?: string[];
+    type?: string;
+    link?: string;
+}
+
+export const cleanPayload = (data: QdrantPayload): CleanedPayload => {
+    const title = data.title || "";
+    const contentId = data.contentId || "";
+    const tagTitles = data.tags || [];
+
+    return {
+        title,
+        contentId,
+        tagTitles
+    };
+};
 
 export type CleanedPayload = {
     title: string,
     contentId: string,
     tagTitles: string[]
-}
-
-export const cleanPayload = (data: ContentType): CleanedPayload => {
-    const  {title, tags, contentId} = data;
-    const tagTitles = tags.map(tag => tag.title);
-
-    return {
-        title, 
-        contentId,
-        tagTitles
-    }
 } 

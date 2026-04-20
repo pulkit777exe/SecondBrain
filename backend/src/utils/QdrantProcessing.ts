@@ -11,23 +11,21 @@ const client = new QdrantClient({
     apiKey: process.env.QDRANT_API_KEY
 })
 
-export const QdrantUpsertPoints = async(data: ContentType ) => {
-    const payload = cleanPayload(data)
-    const embeddings = await getEmbeddings(payload)
+export const QdrantUpsertPoints = async(data: { title: string; contentId?: string; tags?: string[] }) => {
+    const contentId = data.contentId || "";
+    const payload = cleanPayload({ title: data.title, contentId, tags: data.tags });
+    const embeddings = await getEmbeddings(payload);
     try {
-        
         await client.upsert("bigBrain", {
             points: [{
-                id: data.contentId,  
+                id: contentId,
                 payload: payload,
-                vector: embeddings,  
+                vector: embeddings,
             }]
         });
-        console.log("Qdrant Created id: ", data.contentId)
-        return;
-      } catch (error) {
+    } catch (error) {
         console.error("Error upserting points:", error);
-        }
+    }
 }
 
 export const QdrantSearch = async (embeddings : number[]) => {

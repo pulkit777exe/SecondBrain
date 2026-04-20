@@ -20,8 +20,15 @@ export const ContentSchema = z.object({
     link: z.string().min(1, {message: "Enter a valid link"}),
     type: z.enum(contentTypes, {message: "Enter a valid type"}),
     title: z.string().min(1, {message: "Enter a title"}),
-    tags: z.array(TagSchema),
-    contentId: z.string()
+    tags: z.array(TagSchema).optional(),
+    contentId: z.string().optional()
+})
+
+export const CreateContentSchema = z.object({
+    link: z.string().url({message: "Enter a valid URL"}),
+    type: z.enum(contentTypes, {message: "Enter a valid type"}),
+    title: z.string().min(1, {message: "Enter a title"}).max(100),
+    tags: z.array(z.string()).optional()
 })
 
 
