@@ -1,47 +1,57 @@
-import axios from "axios";
 import { DeleteIcon } from "../icons/DeleteIcon";
 import { NotebookIcon } from "../icons/NotebookIcon";
 import { ShareIcon } from "../icons/ShareIcon";
-import { BACKEND_URL } from "../config";
 
 interface CardProps {
     title: string,
     link: string,
-    type: "youtube" | "twitter"
+    type: "youtube" | "twitter",
+    contentId: string,
+    onDelete?: (contentId: string) => void
 }
 
-async function deleteContent() {
-    await axios.delete(`${BACKEND_URL}/api/v1/content/:contentId`,{
-        headers:{
-            "Authorization": localStorage.getItem("token")
+export function Card({title, link, type, contentId, onDelete}: CardProps) {
+    const getEmbedUrl = (url: string, contentType: string) => {
+        if (contentType === "youtube") {
+            return url.replace("watch?v=", "embed/");
         }
-    })
-}
+        return url;
+    };
 
-export function Card({title, link, type}: CardProps) {
-    return <div className="bg-white rounded-xl border border-gray-200 p-4 max-w-96">
-        <div className="flex justify-between items-center">
-            <div className="flex gap-2">
-                <span className="hover:text-gray-500 cursor-pointer">
+    return <div className="bg-white rounded-xl border border-gray-200 p-4 w-full max-w-md">
+        <div className="flex justify-between items-center mb-2">
+            <div className="flex gap-2 items-center">
+                <span className="text-gray-500">
                     <NotebookIcon />
                 </span>
-                {title}
+                <span className="font-medium truncate max-w-[200px]">{title}</span>
             </div>
-            <div className="flex gap-2 text-gray-400 hover:cursor-pointer">
-                <span className="hover:text-purple-400">
+            <div className="flex gap-2 text-gray-400">
+                <button className="hover:text-purple-500" title="Share">
                     <ShareIcon />
-                </span>
-                <span className="hover:text-red-500" onClick={deleteContent}>
-                    <DeleteIcon  />
-                </span>
+                </button>
+                <button className="hover:text-red-500" onClick={() => onDelete?.(contentId)} title="Delete">
+                    <DeleteIcon />
+                </button>
             </div>
         </div>
-        <div className="flex justify-between items-center gap-2 pt-4">
-            {type === "youtube" &&
-            <iframe src={link.replace("watch","embed").replace("?v=","/")} className="w-full rounded-xl max-h-54"></iframe>}
+        <div className="w-full">
+            {type === "youtube" && (
+                <iframe 
+                    src={getEmbedUrl(link, "youtube")} 
+                    className="w-full aspect-video rounded-xl"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                />
+            )}
 
-            {type === "twitter" && 
-            <blockquote className="twitter-tweet w-full"><p lang="zxx"></p> <a href={link.replace("x.com","twitter.com")}></a></blockquote>}
+            {type === "twitter" && (
+                <blockquote className="twitter-tweet">
+                    <a href={link.replace("x.com", "twitter.com")} target="_blank" rel="noopener noreferrer">
+                        {link}
+                    </a>
+                </blockquote>
+            )}
         </div>
     </div>
 }

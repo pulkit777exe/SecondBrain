@@ -2,10 +2,8 @@ import Home from "./pages/Dashboard";
 import { SignUp } from "./pages/SignUp";
 import { SignIn } from "./pages/SignIn";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { CreateContentModal } from "./components/CreateContentModal";
-import { useState } from "react";
+
 function App() {
-    const [modalOpen, setModalOpen] = useState(true);
   
   return (
     <BrowserRouter>

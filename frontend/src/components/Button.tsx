@@ -7,6 +7,7 @@ interface ButtonProps {
     onClick?: () => void;
     fullWidth?: boolean;
     loading?: boolean;
+    disabled?: boolean;
 }
 
 const variantClasses = {
@@ -17,8 +18,8 @@ const variantClasses = {
 const defaultStyles = "px-4 py-2 rounded-md font-light flex items-center";
 
 
-export function Button({variant, text, startIcon, onClick, fullWidth, loading}: ButtonProps) {
-    return <button onClick={onClick} className={variantClasses[variant] + " " + defaultStyles + `${fullWidth ? " w-full flex justify-center items-center" : ""} ${loading ? "opacity-45	" : ""}`} disabled={loading}>
+export function Button({variant, text, startIcon, onClick, fullWidth, loading, disabled}: ButtonProps) {
+    return <button onClick={onClick} className={variantClasses[variant] + " " + defaultStyles + `${fullWidth ? " w-full flex justify-center items-center" : ""} ${loading || disabled ? "opacity-45 cursor-not-allowed" : ""}`} disabled={loading || disabled}>
         <div className="pr-2">
             {startIcon}
         </div>
