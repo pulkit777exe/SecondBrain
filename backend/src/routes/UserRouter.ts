@@ -22,7 +22,7 @@ UserRouter.post('/register', async (req: Request, res: Response) => {
             const hashPass = await bcrypt.hash(data.password, salt_rounds);
             await UserModel.create({
                 email: data.email,
-                password: data.password
+                password: hashPass
             })
             res.status(200).json({
                 message: "User created"
@@ -50,7 +50,7 @@ UserRouter.post("/login", async (req: Request, res: Response) => {
                 email: data.email
             }) 
             if (existingUser) {
-                const match = await bcrypt.compare(data.email, data.password);
+                const match = await bcrypt.compare(data.password, existingUser.password);
                 if (match) {
                     const token = jwt.sign({
                         id: existingUser._id

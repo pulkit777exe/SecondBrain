@@ -8,8 +8,12 @@ export const BrainRouter = Router()
 BrainRouter.post("/share", authMiddleware, async (req: Request, res: Response) => {
     try {
         const shareLink: boolean = req.body.share;
-        // @ts-ignore
         const userId = req.userId;
+        
+        if (!userId) {
+            res.status(401).json({ message: "Unauthorized" });
+            return;
+        }
 
         const content = await ContentModel.findOne({ userId });
 
@@ -20,7 +24,7 @@ BrainRouter.post("/share", authMiddleware, async (req: Request, res: Response) =
             return;
         }
 
-        if (shareLink) {
+        if (shareLink && userId) {
             const hash = crypto.createHash("sha256").update(userId + Date.now()).digest("hex");
 
             const linkCreated = await LinkModel.findOneAndUpdate(
