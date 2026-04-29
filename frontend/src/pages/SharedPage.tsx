@@ -34,59 +34,58 @@ export default function SharedPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen w-full bg-black flex items-center justify-center">
-                <p className="text-zinc-500">Loading...</p>
+            <div className="min-h-screen w-full bg-stone-50 flex items-center justify-center">
+                <p className="text-stone-400">Loading...</p>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="min-h-screen w-full bg-black flex items-center justify-center">
-                <p className="text-red-400">{error}</p>
+            <div className="min-h-screen w-full bg-stone-50 flex items-center justify-center">
+                <p className="text-red-600">{error}</p>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen w-full bg-black flex">
-            <div className="hidden lg:flex lg:w-64 bg-zinc-900 border-r border-zinc-800 flex-col">
+        <div className="min-h-screen w-full bg-stone-50 flex">
+            <div className="hidden lg:flex lg:w-64 bg-stone-50 border-r border-stone-200 flex-col">
                 <div className="p-8">
-                    <h1 className="text-2xl font-bold text-white tracking-tight">secondbrain</h1>
+                    <p className="text-xs uppercase tracking-[0.15em] text-stone-400 mb-1">SecondBrain</p>
+                    <h1 className="text-2xl font-serif text-stone-900">Shared</h1>
                 </div>
             </div>
 
             <div className="flex-1 p-6 lg:p-10 overflow-auto">
                 <div className="max-w-5xl mx-auto">
-                    <p className="text-zinc-500 text-sm mb-8">shared collection</p>
-                    
-                    <h2 className="text-3xl font-semibold text-white mb-8">Content</h2>
+                    <p className="text-xs uppercase tracking-[0.2em] text-stone-400 mb-2">Collection</p>
+                    <h2 className="text-4xl font-serif text-stone-900 mb-10">Shared Links</h2>
 
                     {contents.length === 0 ? (
-                        <p className="text-zinc-500">No content.</p>
+                        <p className="text-stone-500">No content yet.</p>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                             {contents.map((item) => (
-                                <div key={item._id} className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+                                <a 
+                                    key={item._id} 
+                                    href={item.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block bg-white border border-stone-200 p-5 hover:border-stone-400 transition-all"
+                                >
                                     <div className="flex gap-2 items-center mb-3">
-                                        <span className={`p-1.5 rounded-lg ${
+                                        <span className={`text-xs px-2 py-1 rounded-sm ${
                                             item.type === "youtube" 
-                                                ? "bg-red-500/10 text-red-400" 
-                                                : "bg-sky-500/10 text-sky-400"
+                                                ? "bg-red-100 text-red-600" 
+                                                : "bg-sky-100 text-sky-600"
                                         }`}>
-                                            {item.type === "youtube" ? "YT" : "X"}
+                                            {item.type === "youtube" ? "YouTube" : "Twitter"}
                                         </span>
-                                        <span className="font-medium text-white truncate">{item.title}</span>
                                     </div>
-                                    <a 
-                                        href={item.link} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="text-zinc-400 hover:text-white text-sm"
-                                    >
-                                        View →
-                                    </a>
-                                </div>
+                                    <p className="text-stone-900 font-medium line-clamp-2">{item.title}</p>
+                                    <span className="text-stone-400 text-sm mt-3 block">View →</span>
+                                </a>
                             ))}
                         </div>
                     )}

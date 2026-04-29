@@ -42,63 +42,60 @@ export function SignUp() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-black flex items-center justify-center overflow-hidden relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-black to-zinc-900">
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 -right-20 w-96 h-96 bg-zinc-800/30 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 -left-20 w-96 h-96 bg-zinc-800/20 rounded-full blur-3xl" />
-        </div>
-      </div>
-      
-      <div className="relative z-10 w-full max-w-80 px-6">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-semibold text-white tracking-tight mb-2">secondbrain</h1>
-          <p className="text-zinc-500">your digital memory</p>
+    <div className="min-h-screen w-full bg-stone-50 flex items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        <div className="mb-10">
+          <p className="text-xs uppercase tracking-[0.2em] text-stone-400 mb-3">
+            Create Account
+          </p>
+          <h1 className="text-5xl font-serif text-stone-900 leading-tight">
+            Start<br />saving.
+          </h1>
         </div>
         
-        <div className="space-y-3">
-          <div className={`relative transition-all duration-300 ${focused === "email" ? "scale-[1.02]" : ""}`}>
+        <div className="space-y-6">
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-stone-500 mb-2">
+              Email
+            </label>
             <input 
               ref={emailRef}
               type="email" 
-              placeholder="email"
               onFocus={() => setFocused("email")}
               onBlur={() => setFocused(null)}
-              className={`w-full bg-zinc-900/50 border border-zinc-800 rounded-2xl px-5 py-4 text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-600 transition-all duration-200 ${focused === "email" ? "bg-zinc-900 shadow-lg shadow-zinc-900/50" : ""}`}
+              className={`w-full border-b border-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors bg-transparent ${focused === "email" ? "border-stone-900" : ""}`}
             />
           </div>
-          <div className={`relative transition-all duration-300 ${focused === "password" ? "scale-[1.02]" : ""}`}>
+          
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-stone-500 mb-2">
+              Password
+            </label>
             <input 
               ref={passwordRef}
               type="password" 
-              placeholder="password"
               onFocus={() => setFocused("password")}
               onBlur={() => setFocused(null)}
-              className={`w-full bg-zinc-900/50 border border-zinc-800 rounded-2xl px-5 py-4 text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-600 transition-all duration-200 ${focused === "password" ? "bg-zinc-900 shadow-lg shadow-zinc-900/50" : ""}`}
+              className={`w-full border-b border-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors bg-transparent ${focused === "password" ? "border-stone-900" : ""}`}
             />
           </div>
         </div>
         
         {error && (
-          <p className="text-red-400 text-sm mt-4 text-center animate-pulse">{error}</p>
+          <p className="text-red-600 text-sm mt-4">{error}</p>
         )}
         
         <button 
           onClick={signup}
           disabled={loading}
-          className="w-full mt-8 py-4 bg-white text-black font-medium rounded-2xl hover:bg-zinc-200 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="mt-10 w-full py-4 bg-stone-900 text-white font-medium hover:bg-stone-800 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <span className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-              Creating...
-            </span>
-          ) : "Continue"}
+          {loading ? "Creating..." : "Continue"}
         </button>
         
-        <div className="text-center mt-8">
-          <span className="text-zinc-600">Have an account? </span>
-          <span onClick={() => navigate("/signin")} className="text-white cursor-pointer hover:underline">Sign in</span>
+        <div className="mt-8 text-center">
+          <span className="text-stone-400">Have an account? </span>
+          <span onClick={() => navigate("/signin")} className="text-stone-900 cursor-pointer hover:underline">Sign in</span>
         </div>
       </div>
     </div>

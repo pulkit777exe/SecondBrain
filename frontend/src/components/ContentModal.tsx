@@ -1,7 +1,5 @@
 import { useRef, useState, useEffect } from "react";
 import { CrossIcon } from "../icons/CrossIcon";
-import { Button } from "./Button";
-import { Input } from "./Input";
 import { BACKEND_URL } from "../config";
 import axios from "axios";
 import { YoutubeIcon } from "../icons/YoutubeIcon";
@@ -99,45 +97,55 @@ export function ContentModal({open, onClose, onSuccess, editMode, content}: Cont
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-zinc-950 border border-zinc-800 p-6 rounded-3xl max-w-md w-full animate-in fade-in zoom-in-95 duration-200">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-semibold text-white">
-                        {editMode ? "Edit" : "Add new"}
+            <div className="absolute inset-0 bg-stone-900/40" onClick={onClose} />
+            <div className="relative bg-white border border-stone-200 p-8 rounded-sm max-w-md w-full">
+                <div className="flex justify-between items-center mb-8">
+                    <h2 className="text-2xl font-serif text-stone-900">
+                        {editMode ? "Edit Link" : "Add Link"}
                     </h2>
                     <button 
                         onClick={onClose} 
-                        className="p-2 -mr-2 rounded-full hover:bg-zinc-900 text-zinc-500 hover:text-white transition-all"
+                        className="p-2 -mr-2 text-stone-400 hover:text-stone-900 transition-colors"
                     >
                         <CrossIcon />
                     </button>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-5">
                     <div>
-                        <label className="block text-sm text-zinc-500 mb-2">Title</label>
-                        <Input ref={titleRef} placeholder="A great video" />
+                        <label className="block text-xs uppercase tracking-wider text-stone-500 mb-2">Title</label>
+                        <input 
+                            ref={titleRef}
+                            className="w-full border-b border-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors bg-transparent" 
+                        />
                     </div>
                     <div>
-                        <label className="block text-sm text-zinc-500 mb-2">Link</label>
-                        <Input ref={linkRef} placeholder="https://..." />
+                        <label className="block text-xs uppercase tracking-wider text-stone-500 mb-2">Link</label>
+                        <input 
+                            ref={linkRef}
+                            className="w-full border-b border-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors bg-transparent" 
+                        />
                     </div>
                     <div>
-                        <label className="block text-sm text-zinc-500 mb-2">Tags (comma separated)</label>
-                        <Input ref={tagsRef} placeholder="tech, music" />
+                        <label className="block text-xs uppercase tracking-wider text-stone-500 mb-2">Tags</label>
+                        <input 
+                            ref={tagsRef}
+                            placeholder="tech, music"
+                            className="w-full border-b border-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors bg-transparent" 
+                        />
                     </div>
                 </div>
                 
                 <div className="mt-6">
-                    <label className="block text-sm text-zinc-500 mb-3">Type</label>
+                    <label className="block text-xs uppercase tracking-wider text-stone-500 mb-3">Type</label>
                     <div className="flex gap-2">
                         <button
                             type="button"
                             onClick={() => setType(ContentType.Youtube)}
-                            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl border transition-all duration-200 ${
+                            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-sm border transition-all duration-200 ${
                                 type === ContentType.Youtube 
-                                    ? "border-red-500 bg-red-500/10 text-red-400" 
-                                    : "border-zinc-800 hover:border-zinc-700 text-zinc-400"
+                                    ? "border-red-400 bg-red-50 text-red-600" 
+                                    : "border-stone-200 hover:border-stone-400 text-stone-500"
                             }`}
                         >
                             <YoutubeIcon />
@@ -146,10 +154,10 @@ export function ContentModal({open, onClose, onSuccess, editMode, content}: Cont
                         <button
                             type="button"
                             onClick={() => setType(ContentType.Twitter)}
-                            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl border transition-all duration-200 ${
+                            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-sm border transition-all duration-200 ${
                                 type === ContentType.Twitter 
-                                    ? "border-sky-500 bg-sky-500/10 text-sky-400" 
-                                    : "border-zinc-800 hover:border-zinc-700 text-zinc-400"
+                                    ? "border-sky-400 bg-sky-50 text-sky-600" 
+                                    : "border-stone-200 hover:border-stone-400 text-stone-500"
                             }`}
                         >
                             <TwitterIcon />
@@ -159,20 +167,20 @@ export function ContentModal({open, onClose, onSuccess, editMode, content}: Cont
                 </div>
                 
                 {error && (
-                    <p className="text-red-400 text-sm mt-4">{error}</p>
+                    <p className="text-red-600 text-sm mt-4">{error}</p>
                 )}
                 
-                <div className="flex gap-3 mt-6">
-                    <Button 
-                        variant="secondary" 
-                        text="Cancel" 
+                <div className="flex gap-3 mt-8">
+                    <button 
                         onClick={onClose}
-                        className="flex-1"
-                    />
+                        className="flex-1 py-3 border border-stone-200 text-stone-500 rounded-sm hover:bg-stone-50 transition-all"
+                    >
+                        Cancel
+                    </button>
                     <button 
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="flex-1 py-3 bg-white text-black font-medium rounded-2xl hover:bg-zinc-200 active:scale-[0.98] transition-all disabled:opacity-50"
+                        className="flex-1 py-3 bg-stone-900 text-white font-medium rounded-sm hover:bg-stone-800 active:scale-[0.98] transition-all disabled:opacity-50"
                     >
                         {loading ? "Saving..." : editMode ? "Save" : "Add"}
                     </button>

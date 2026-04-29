@@ -15,11 +15,15 @@ html {
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background: #000;
-    color: #fff;
+    background: #fafaf9;
+    color: #1c1917;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', Georgia, serif;
 }
 
 @keyframes fadeIn {
@@ -60,7 +64,7 @@ body {
 }
 
 .skeleton {
-    background: linear-gradient(90deg, #18181b 25%, #27272a 50%, #18181b 75%);
+    background: linear-gradient(90deg, #e7e5e4 25%, #f5f5f4 50%, #e7e5e4 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
 }
@@ -70,12 +74,12 @@ input, button, a, textarea {
 }
 
 input:focus-visible, button:focus-visible {
-    outline: 2px solid rgba(255,255,255,0.3);
+    outline: 2px solid rgba(28, 25, 23, 0.3);
     outline-offset: 2px;
 }
 
 ::selection {
-    background: rgba(255,255,255,0.2);
+    background: rgba(28, 25, 23, 0.15);
 }
 
 ::-webkit-scrollbar {
@@ -88,12 +92,12 @@ input:focus-visible, button:focus-visible {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #3f3f46;
+    background: #d6d3d1;
     border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #52525b;
+    background: #a8a29e;
 }
 
 @media (prefers-reduced-motion: reduce) {
