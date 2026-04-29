@@ -70,12 +70,28 @@ ContentRouter.get("/", authMiddleware, async (req: Request, res: Response) => {
             return;
         }
 
-        const allContent = await ContentModel.find({ userId })
-            .populate("userId", "username")
-            .populate("tags", "title");
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
+        const skip = (page - 1) * limit;
+
+        const [allContent, total] = await Promise.all([
+            ContentModel.find({ userId })
+                .populate("userId", "username")
+                .populate("tags", "title")
+                .skip(skip)
+                .limit(limit)
+                .sort({ createdAt: -1 }),
+            ContentModel.countDocuments({ userId })
+        ]);
 
         res.status(200).json({
             allContent,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
         }); 
     } catch (err) {
         res.status(500).json({

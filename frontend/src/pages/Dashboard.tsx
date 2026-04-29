@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card } from "../components/Card"
-import { CreateContentModal } from "../components/CreateContentModal"
+import { ContentModal } from "../components/ContentModal"
 import { useContent, Content } from "../hooks/useContent";
 import { useNavigate } from "react-router-dom";
 import { BACKEND_URL } from "../config";
@@ -12,11 +12,13 @@ type FilterType = "all" | "youtube" | "twitter";
 
 export default function Dashboard() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editingContent, setEditingContent] = useState<Content | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
-  const { contents, loading, refresh, deleteContent } = useContent();
+  const { contents, loading, refresh, deleteContent, pagination, setPage } = useContent();
   const navigate = useNavigate();
   
   useEffect(() => {
@@ -49,6 +51,21 @@ export default function Dashboard() {
   async function handleDelete(contentId: string) {
     await deleteContent(contentId);
     setShowDeleteConfirm(null);
+  }
+
+  function openAddModal() {
+    setEditMode(false);
+    setEditingContent(null);
+    setModalOpen(true);
+  }
+
+  function openEditModal(contentId: string) {
+    const content = contents.find(c => c.contentId === contentId);
+    if (content) {
+      setEditMode(true);
+      setEditingContent(content);
+      setModalOpen(true);
+    }
   }
 
   const filteredContents = contents.filter(item => {
@@ -117,7 +134,7 @@ export default function Dashboard() {
             
             <div className="flex gap-3">
               <button 
-                onClick={() => setModalOpen(true)}
+                onClick={openAddModal}
                 className="px-4 py-2 text-sm text-zinc-400 hover:text-white transition-colors flex items-center gap-2 group"
               >
                 <PlusIcon />
@@ -158,17 +175,29 @@ export default function Dashboard() {
                 type={item.type}
                 link={item.link}
                 title={item.title}
+                tags={item.tags}
                 onDelete={(id) => setShowDeleteConfirm(id)}
+                onEdit={(id) => openEditModal(id)}
               />
             ))}
           </div>
+          
+          {pagination && pagination.totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-8">
+              <button onClick={() => setPage(pagination.page - 1)} disabled={pagination.page === 1} className="px-3 py-1 text-zinc-400 disabled:opacity-50">Prev</button>
+              <span className="px-3 py-1 text-zinc-500">{pagination.page} / {pagination.totalPages}</span>
+              <button onClick={() => setPage(pagination.page + 1)} disabled={pagination.page >= pagination.totalPages} className="px-3 py-1 text-zinc-400 disabled:opacity-50">Next</button>
+            </div>
+          )}
         </div>
       </div>
 
-      <CreateContentModal 
+      <ContentModal 
         open={modalOpen} 
         onClose={() => setModalOpen(false)} 
-        onSuccess={refresh} 
+        onSuccess={refresh}
+        editMode={editMode}
+        content={editingContent}
       />
 
       {showDeleteConfirm && (

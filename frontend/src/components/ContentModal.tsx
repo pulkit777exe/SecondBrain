@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { CrossIcon } from "../icons/CrossIcon";
 import { Button } from "./Button";
 import { Input } from "./Input";
@@ -12,22 +12,50 @@ enum ContentType {
     Twitter = "twitter"
 }
 
-interface CreateContentModalProps {
+interface ContentData {
+    contentId: string;
+    title: string;
+    link: string;
+    type: "youtube" | "twitter";
+    tags?: { title: string }[];
+}
+
+interface ContentModalProps {
     open: boolean;
     onClose: () => void;
     onSuccess?: () => void;
+    editMode?: boolean;
+    content?: ContentData | null;
 }
 
-export function CreateContentModal({open, onClose, onSuccess}: CreateContentModalProps) {
+export function ContentModal({open, onClose, onSuccess, editMode, content}: ContentModalProps) {
     const titleRef = useRef<HTMLInputElement>(null);
     const linkRef = useRef<HTMLInputElement>(null);
+    const tagsRef = useRef<HTMLInputElement>(null);
     const [type, setType] = useState<ContentType>(ContentType.Youtube);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    async function addContent() {
+    useEffect(() => {
+        if (open && editMode && content) {
+            setType(content.type as ContentType);
+            const tagStr = content.tags?.map((t: { title: string }) => t.title).join(", ") || "";
+            if (titleRef.current) titleRef.current.value = content.title;
+            if (linkRef.current) linkRef.current.value = content.link;
+            if (tagsRef.current) tagsRef.current.value = tagStr;
+        } else if (open && !editMode) {
+            setType(ContentType.Youtube);
+            if (titleRef.current) titleRef.current.value = "";
+            if (linkRef.current) linkRef.current.value = "";
+            if (tagsRef.current) tagsRef.current.value = "";
+        }
+    }, [open, editMode, content]);
+
+    async function handleSubmit() {
         const title = titleRef.current?.value || "";
         const link = linkRef.current?.value || "";
+        const tagString = tagsRef.current?.value || "";
+        const tagList = tagString.split(",").map(t => t.trim()).filter(Boolean);
         
         if (!title || !link) {
             setError("Title and link are required");
@@ -38,21 +66,34 @@ export function CreateContentModal({open, onClose, onSuccess}: CreateContentModa
         setError(null);
 
         try {
-            await axios.post(`${BACKEND_URL}/v1/content`, {
-                link,
-                title,
-                type
-            }, {
-                headers: {
-                    "Authorization": localStorage.getItem("token")
-                }
-            })
-            if (titleRef.current) titleRef.current.value = "";
-            if (linkRef.current) linkRef.current.value = "";
+            if (editMode && content) {
+                await axios.put(`${BACKEND_URL}/v1/content`, {
+                    contentId: content.contentId,
+                    link,
+                    title,
+                    type,
+                    tags: tagList
+                }, {
+                    headers: {
+                        "Authorization": localStorage.getItem("token")
+                    }
+                });
+            } else {
+                await axios.post(`${BACKEND_URL}/v1/content`, {
+                    link,
+                    title,
+                    type,
+                    tags: tagList
+                }, {
+                    headers: {
+                        "Authorization": localStorage.getItem("token")
+                    }
+                });
+            }
             onClose();
             onSuccess?.();
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Failed to add content");
+            setError(err instanceof Error ? err.message : "Failed to save content");
         } finally {
             setLoading(false);
         }
@@ -65,7 +106,9 @@ export function CreateContentModal({open, onClose, onSuccess}: CreateContentModa
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
             <div className="relative bg-zinc-900 p-6 rounded-2xl border border-zinc-800 max-w-md w-full mx-4 animate-fade-in">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-semibold text-white">Add New Content</h2>
+                    <h2 className="text-xl font-semibold text-white">
+                        {editMode ? "Edit Content" : "Add New Content"}
+                    </h2>
                     <button 
                         onClick={onClose} 
                         className="p-2 rounded-lg hover:bg-white/5 text-zinc-400 hover:text-white transition-colors"
@@ -77,11 +120,15 @@ export function CreateContentModal({open, onClose, onSuccess}: CreateContentModa
                 <div className="space-y-4">
                     <div>
                         <label className="block text-sm text-zinc-400 mb-2">Title</label>
-                        <Input ref={titleRef} placeholder="Enter a title for your content" />
+                        <Input ref={titleRef} placeholder="Enter a title" />
                     </div>
                     <div>
                         <label className="block text-sm text-zinc-400 mb-2">Link</label>
                         <Input ref={linkRef} placeholder="Paste URL here" />
+                    </div>
+                    <div>
+                        <label className="block text-sm text-zinc-400 mb-2">Tags (comma separated)</label>
+                        <Input ref={tagsRef} placeholder="tech, music, learning" />
                     </div>
                 </div>
                 
@@ -89,22 +136,24 @@ export function CreateContentModal({open, onClose, onSuccess}: CreateContentModa
                     <label className="block text-sm text-zinc-400 mb-3">Content Type</label>
                     <div className="flex gap-3">
                         <button
+                            type="button"
                             onClick={() => setType(ContentType.Youtube)}
                             className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${
                                 type === ContentType.Youtube 
                                     ? "border-red-500 bg-red-500/10 text-red-400" 
-                                    : "border-[#2a2a2a] hover:border-[#3a3a3a] text-zinc-400"
+                                    : "border-zinc-800 hover:border-zinc-700 text-zinc-400"
                             }`}
                         >
                             <YoutubeIcon />
                             YouTube
                         </button>
                         <button
+                            type="button"
                             onClick={() => setType(ContentType.Twitter)}
                             className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${
                                 type === ContentType.Twitter 
                                     ? "border-sky-500 bg-sky-500/10 text-sky-400" 
-                                    : "border-[#2a2a2a] hover:border-[#3a3a3a] text-zinc-400"
+                                    : "border-zinc-800 hover:border-zinc-700 text-zinc-400"
                             }`}
                         >
                             <TwitterIcon />
@@ -127,9 +176,9 @@ export function CreateContentModal({open, onClose, onSuccess}: CreateContentModa
                         className="flex-1"
                     />
                     <Button 
-                        onClick={addContent} 
+                        onClick={handleSubmit} 
                         variant="primary" 
-                        text={loading ? "Adding..." : "Add Content"} 
+                        text={loading ? "Saving..." : editMode ? "Save Changes" : "Add Content"} 
                         disabled={loading}
                         className="flex-1"
                     />

@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-route
 import { SignUp } from "./pages/SignUp";
 import { SignIn } from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
+import SharedPage from "./pages/SharedPage";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem("token");
@@ -27,13 +29,16 @@ function Landing() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<Landing />} path="/" />
-        <Route element={<SignIn />} path="/signin" />
-        <Route element={<SignUp />} path="/signup" />
-        <Route element={<ProtectedRoute><Dashboard /></ProtectedRoute>} path="/dashboard" />
-      </Routes>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<Landing />} path="/" />
+          <Route element={<SignIn />} path="/signin" />
+          <Route element={<SignUp />} path="/signup" />
+          <Route element={<ProtectedRoute><Dashboard /></ProtectedRoute>} path="/dashboard" />
+          <Route element={<SharedPage />} path="/shared/:shareLink" />
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }

@@ -8,39 +8,60 @@ export interface Content {
     title: string;
     link: string;
     type: "youtube" | "twitter";
-    tags: string[];
+    tags: { title: string }[];
     userId: string;
+}
+
+export interface Pagination {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
 }
 
 interface UseContentReturn {
     contents: Content[];
     loading: boolean;
     error: string | null;
+    pagination: Pagination | null;
     refresh: () => Promise<void>;
     deleteContent: (contentId: string) => Promise<void>;
+    setPage: (page: number) => void;
 }
 
 export function useContent(): UseContentReturn {
     const [contents, setContents] = useState<Content[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [pagination, setPagination] = useState<Pagination | null>(null);
+    const [page, setPage] = useState(1);
 
-    const refresh = useCallback(async () => {
+    const fetchContent = useCallback(async (pageNum: number = 1) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`${BACKEND_URL}/v1/content`, {
+            const response = await axios.get(`${BACKEND_URL}/v1/content?page=${pageNum}&limit=20`, {
                 headers: {
                     "Authorization": localStorage.getItem("token")
                 }
             });
             setContents(response.data.allContent || []);
+            setPagination(response.data.pagination || null);
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "Failed to fetch content");
         } finally {
             setLoading(false);
         }
     }, []);
+
+    const refresh = useCallback(async () => {
+        await fetchContent(page);
+    }, [fetchContent, page]);
+
+    const changePage = useCallback((newPage: number) => {
+        setPage(newPage);
+        fetchContent(newPage);
+    }, [fetchContent]);
 
     const deleteContent = useCallback(async (contentId: string) => {
         try {
@@ -57,8 +78,8 @@ export function useContent(): UseContentReturn {
     }, []);
 
     useEffect(() => {
-        refresh();
-    }, [refresh]);
+        fetchContent();
+    }, [fetchContent]);
 
-    return { contents, loading, error, refresh, deleteContent };
+    return { contents, loading, error, pagination, refresh, deleteContent, setPage: changePage };
 }
