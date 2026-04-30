@@ -36,6 +36,7 @@ export function CreateContentModal({open, onClose, onSuccess}: CreateContentModa
 
         setLoading(true);
         setError(null);
+        const token = localStorage.getItem("token");
 
         try {
             await axios.post(`${BACKEND_URL}/v1/content`, {
@@ -44,7 +45,7 @@ export function CreateContentModal({open, onClose, onSuccess}: CreateContentModa
                 type
             }, {
                 headers: {
-                    "Authorization": localStorage.getItem("token")
+                    "Authorization": `Bearer ${token}`
                 }
             })
             if (titleRef.current) titleRef.current.value = "";
