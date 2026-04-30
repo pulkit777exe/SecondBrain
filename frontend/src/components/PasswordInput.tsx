@@ -16,7 +16,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
                     ref={ref}
                     type={showPassword ? "text" : "password"}
                     placeholder={placeholder}
-                    className="w-full border-b border-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors bg-transparent pr-10"
+                    className="w-full border-b border-b-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-b-stone-900 transition-colors bg-transparent pe-10"
                     {...props}
                 />
                 <button
@@ -24,6 +24,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-0 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors"
                     tabIndex={-1}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                     {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                 </button>

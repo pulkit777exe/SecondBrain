@@ -63,6 +63,7 @@ export function ContentModal({open, onClose, onSuccess, editMode, content}: Cont
     const [type, setType] = useState<ContentTypeOption>("youtube");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState(false);
 
     useEffect(() => {
         if (open && editMode && content) {
@@ -85,8 +86,20 @@ export function ContentModal({open, onClose, onSuccess, editMode, content}: Cont
         const tagString = tagsRef.current?.value || "";
         const tagList = tagString.split(",").map(t => t.trim()).filter(Boolean);
         
-        if (!title || !link) {
-            setError("Title and link are required");
+        if (!title.trim()) {
+            setError("Please enter a title");
+            return;
+        }
+        
+        if (!link.trim()) {
+            setError("Please enter a URL");
+            return;
+        }
+        
+        try {
+            new URL(link);
+        } catch {
+            setError("Please enter a valid URL");
             return;
         }
 
@@ -108,22 +121,40 @@ export function ContentModal({open, onClose, onSuccess, editMode, content}: Cont
             };
 
             if (editMode && content) {
-                await fetch(`${BACKEND_URL}/v1/content`, {
+                const response = await fetch(`${BACKEND_URL}/v1/content`, {
                     method: "PUT",
                     headers,
                     body: JSON.stringify({ ...payload, contentId: content.contentId })
                 });
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.message || "Failed to update");
+                }
             } else {
-                await fetch(`${BACKEND_URL}/v1/content`, {
+                const response = await fetch(`${BACKEND_URL}/v1/content`, {
                     method: "POST",
                     headers,
                     body: JSON.stringify(payload)
                 });
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.message || "Failed to save");
+                }
             }
             onClose();
             onSuccess?.();
+            setSuccess(true);
+            setTimeout(() => setSuccess(false), 1500);
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Failed to save");
+            if (err instanceof Error) {
+                if (err.message.includes("Failed to save") || err.message.includes("Failed to update")) {
+                    setError(err.message);
+                } else {
+                    setError("Something went wrong. Please try again.");
+                }
+            } else {
+                setError("Something went wrong. Please try again.");
+            }
         } finally {
             setLoading(false);
         }
@@ -134,14 +165,15 @@ export function ContentModal({open, onClose, onSuccess, editMode, content}: Cont
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-stone-900/40" onClick={onClose} />
-            <div className="relative bg-white border border-stone-200 p-8 rounded-sm max-w-md w-full">
-                <div className="flex justify-between items-center mb-8">
-                    <h2 className="text-2xl font-serif text-stone-900">
+            <div className="relative bg-white border border-stone-200 p-8 rounded-sm max-w-md w-full max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-8 min-w-0">
+                    <h2 className="text-2xl font-serif text-stone-900 truncate">
                         {editMode ? "Edit Link" : "Add Link"}
                     </h2>
                     <button 
                         onClick={onClose} 
-                        className="p-2 -mr-2 text-stone-400 hover:text-stone-900 transition-colors"
+                        className="p-2 -me-2 text-stone-400 hover:text-stone-900 transition-colors"
+                        aria-label="Close dialog"
                     >
                         <CrossIcon />
                     </button>
@@ -149,26 +181,36 @@ export function ContentModal({open, onClose, onSuccess, editMode, content}: Cont
                 
                 <div className="space-y-5">
                     <div>
-                        <label className="block text-xs uppercase tracking-wider text-stone-500 mb-2">Title</label>
+                        <label htmlFor="content-title" className="block text-xs uppercase tracking-wider text-stone-500 mb-2">Title</label>
                         <input 
                             ref={titleRef}
-                            className="w-full border-b border-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors bg-transparent" 
+                            id="content-title"
+                            type="text"
+                            aria-required="true"
+                            className="w-full border-b border-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors bg-transparent break-words" 
                         />
                     </div>
                     <div>
-                        <label className="block text-xs uppercase tracking-wider text-stone-500 mb-2">Link</label>
+                        <label htmlFor="content-link" className="block text-xs uppercase tracking-wider text-stone-500 mb-2">Link</label>
                         <input 
                             ref={linkRef}
-                            className="w-full border-b border-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors bg-transparent" 
+                            id="content-link"
+                            type="url"
+                            aria-required="true"
+                            className="w-full border-b border-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors bg-transparent break-all" 
                         />
                     </div>
                     <div>
-                        <label className="block text-xs uppercase tracking-wider text-stone-500 mb-2">Tags</label>
+                        <label htmlFor="content-tags" className="block text-xs uppercase tracking-wider text-stone-500 mb-2">Tags</label>
                         <input 
                             ref={tagsRef}
+                            id="content-tags"
+                            type="text"
                             placeholder="tech, music"
+                            aria-describedby="tags-hint"
                             className="w-full border-b border-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors bg-transparent" 
                         />
+                        <span id="tags-hint" className="text-xs text-stone-400">Separate with commas</span>
                     </div>
                 </div>
                 
@@ -195,6 +237,15 @@ export function ContentModal({open, onClose, onSuccess, editMode, content}: Cont
                 
                 {error && (
                     <p className="text-red-600 text-sm mt-4">{error}</p>
+                )}
+                
+                {success && (
+                    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-sm flex items-center gap-3 animate-scale-in">
+                        <svg className="w-5 h-5 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="text-green-700 text-sm">Saved to your library</span>
+                    </div>
                 )}
                 
                 <div className="flex gap-3 mt-8">

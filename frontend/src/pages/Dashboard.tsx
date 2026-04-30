@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { Card } from "../components/Card"
 import { ContentModal } from "../components/ContentModal"
 import { useContent, Content } from "../hooks/useContent";
@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('sidebarOpen');
@@ -26,8 +27,9 @@ export default function Dashboard() {
     }
     return true;
   });
-  const { contents, loading, refresh, deleteContent, pagination, setPage } = useContent();
+  const { contents, loading, error, refresh, deleteContent, pagination, setPage } = useContent();
   const navigate = useNavigate();
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const toggleSidebar = (open: boolean) => {
     setSidebarOpen(open);
@@ -51,6 +53,22 @@ export default function Dashboard() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+      if (e.key === "Escape") {
+        if (modalOpen) setModalOpen(false);
+        if (showDeleteConfirm) setShowDeleteConfirm(null);
+        if (shareLink) setShareLink(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [modalOpen, showDeleteConfirm, shareLink]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -81,6 +99,11 @@ export default function Dashboard() {
     setEditMode(false);
     setEditingContent(null);
     setModalOpen(true);
+  }, []);
+
+  const showSuccess = useCallback((message: string) => {
+    setSuccessToast(message);
+    setTimeout(() => setSuccessToast(null), 3000);
   }, []);
 
   const openEditModal = useCallback((contentId: string) => {
@@ -122,6 +145,8 @@ export default function Dashboard() {
       <button 
         onClick={() => toggleSidebar(!sidebarOpen)}
         className="fixed top-4 left-4 z-50 p-2 bg-white border border-stone-200 rounded-md shadow-sm hover:bg-stone-50 transition-all"
+        aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+        title={sidebarOpen ? "Close menu" : "Open menu"}
       >
         <svg className="w-5 h-5 text-stone-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -184,27 +209,39 @@ export default function Dashboard() {
 
       <div className="flex-1 p-4 lg:p-10 overflow-auto lg:ml-0">
         <div className="max-w-6xl mx-auto">
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md flex items-center justify-between">
+              <span className="text-red-700 text-sm">{error}</span>
+              <button onClick={() => refresh()} className="text-red-600 hover:text-red-800 text-sm font-medium">
+                Try again
+              </button>
+            </div>
+          )}
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8 lg:mb-12">
-            <div className="order-2 sm:order-1 w-full sm:w-auto">
+            <div className="order-2 sm:order-1 w-full sm:w-auto flex items-center gap-2">
               <input
+                ref={searchInputRef}
                 type="text"
                 placeholder="Search your library..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full sm:w-64 lg:w-80 bg-transparent border-b border-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors"
               />
+              <span className="hidden lg:inline text-xs text-stone-400 whitespace-nowrap">⌘K</span>
             </div>
             
             <div className="flex gap-2 sm:gap-3 order-1 sm:order-2">
               <button 
                 onClick={shareBrain}
                 className="px-4 py-3 bg-stone-100 border border-stone-200 text-stone-600 rounded-md hover:bg-stone-200 hover:border-stone-300 transition-all text-sm"
+                title="Generate shareable link"
               >
                 Share
               </button>
               <button 
                 onClick={openAddModal}
                 className="px-5 py-3 bg-stone-900 text-white font-medium rounded-md hover:bg-stone-800 active:scale-[0.98] transition-all"
+                title="Add new content"
               >
                 + Add
               </button>
@@ -212,9 +249,9 @@ export default function Dashboard() {
           </div>
 
           {shareLink && (
-            <div className="mb-6 lg:mb-8 p-4 bg-stone-100 border border-stone-200 rounded-md flex items-center justify-between">
-              <span className="text-stone-600 text-sm truncate mr-4 font-mono">{shareLink}</span>
-              <button onClick={() => setShareLink(null)} className="text-stone-400 hover:text-stone-900 shrink-0">
+            <div className="mb-6 lg:mb-8 p-4 bg-stone-100 border border-stone-200 rounded-md flex items-center justify-between gap-4">
+              <span className="text-stone-600 text-sm truncate font-mono min-w-0">{shareLink}</span>
+              <button onClick={() => setShareLink(null)} className="text-stone-400 hover:text-stone-900 shrink-0" aria-label="Close">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -228,9 +265,22 @@ export default function Dashboard() {
             </div>
           ) : filteredContents.length === 0 ? (
             <div className="text-center py-16 lg:py-20">
-              <div className="text-5xl lg:text-6xl mb-4">🧠</div>
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-stone-100 flex items-center justify-center">
+                <svg className="w-10 h-10 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
               <p className="text-stone-500 text-lg mb-2">No content yet</p>
-              <p className="text-stone-400 text-sm">Save your first link to get started</p>
+              <p className="text-stone-400 text-sm mb-6">Save your first link to get started</p>
+              <button 
+                onClick={openAddModal}
+                className="inline-flex items-center gap-2 px-5 py-3 bg-stone-900 text-white font-medium rounded-md hover:bg-stone-800 active:scale-[0.98] transition-all"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add your first link
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
@@ -281,10 +331,24 @@ export default function Dashboard() {
       <ContentModal 
         open={modalOpen} 
         onClose={() => setModalOpen(false)} 
-        onSuccess={refresh}
+        onSuccess={() => {
+          refresh();
+          showSuccess(editMode ? "Link updated" : "Link saved to your library");
+        }}
         editMode={editMode}
         content={editingContent}
       />
+
+      {successToast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-slide-up">
+          <div className="flex items-center gap-3 px-4 py-3 bg-stone-900 text-white rounded-md shadow-lg">
+            <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="text-sm font-medium">{successToast}</span>
+          </div>
+        </div>
+      )}
 
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-stone-900/40 flex items-center justify-center z-50 p-4">

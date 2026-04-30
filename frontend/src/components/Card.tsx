@@ -145,6 +145,8 @@ function CardComponent({title, link, type, contentId, tags, onDelete, onEdit}: C
                             className="w-full h-full object-cover"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
+                            loading="lazy"
+                            title={`YouTube embed: ${title}`}
                         />
                     </div>
                 );
@@ -156,6 +158,8 @@ function CardComponent({title, link, type, contentId, tags, onDelete, onEdit}: C
                         className="w-full h-32 rounded-sm"
                         frameBorder="0"
                         allowFullScreen
+                        loading="lazy"
+                        title={`${type} embed: ${title}`}
                     />
                 );
             }
@@ -198,6 +202,7 @@ function CardComponent({title, link, type, contentId, tags, onDelete, onEdit}: C
                 <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
                     <button 
                         className="p-2 bg-white border border-stone-200 rounded-sm text-stone-500 hover:text-stone-900 hover:border-stone-400 transition-all"
+                        aria-label="Share link"
                         title="Share"
                     >
                         <ShareIcon />
@@ -205,6 +210,7 @@ function CardComponent({title, link, type, contentId, tags, onDelete, onEdit}: C
                     <button 
                         className="p-2 bg-white border border-stone-200 rounded-sm text-stone-500 hover:text-stone-900 hover:border-stone-400 transition-all"
                         onClick={() => onEdit?.(contentId)}
+                        aria-label="Edit content"
                         title="Edit"
                     >
                         <EditIcon />
@@ -212,6 +218,7 @@ function CardComponent({title, link, type, contentId, tags, onDelete, onEdit}: C
                     <button 
                         className="p-2 bg-white border border-stone-200 rounded-sm text-stone-500 hover:text-red-600 hover:border-red-200 transition-all"
                         onClick={() => onDelete?.(contentId)}
+                        aria-label="Delete content"
                         title="Delete"
                     >
                         <DeleteIcon />
@@ -220,8 +227,8 @@ function CardComponent({title, link, type, contentId, tags, onDelete, onEdit}: C
             </div>
 
             <div className="pt-3">
-                <div className="flex items-center gap-2 mb-2">
-                    <div className={`p-1 rounded-sm ${getColor(type)}`}>
+                <div className="flex items-center gap-2 mb-2 min-w-0">
+                    <div className={`p-1 rounded-sm ${getColor(type)} shrink-0`}>
                         {getIcon(type)}
                     </div>
                     <span className="text-stone-900 font-medium text-sm truncate">{title}</span>

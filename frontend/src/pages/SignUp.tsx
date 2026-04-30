@@ -25,7 +25,12 @@ export function SignUp() {
     const password = passwordRef.current?.value || "";
 
     if (!email || !password) {
-      setError("Fill in both fields");
+      setError("Please fill in both fields");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
       return;
     }
 
@@ -35,16 +40,22 @@ export function SignUp() {
     try {
       await axios.post(`${BACKEND_URL}/v1/user/register`, { email, password });
       navigate("/signin");
-    } catch {
-      setError("Something went wrong");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response?.status === 409) {
+        setError("An account with this email already exists");
+      } else if (axios.isAxiosError(err) && !err.response) {
+        setError("Unable to connect. Please check your internet.");
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen w-full bg-stone-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen w-full bg-stone-50 flex items-center justify-center p-4 lg:p-6 overflow-auto">
+      <div className="w-full max-w-md min-w-0">
         <div className="mb-10">
           <p className="text-xs uppercase tracking-[0.2em] text-stone-400 mb-3">
             Create Account
@@ -56,12 +67,14 @@ export function SignUp() {
         
         <div className="space-y-6">
           <div>
-            <label className="block text-xs uppercase tracking-wider text-stone-500 mb-2">
+            <label htmlFor="signup-email" className="block text-xs uppercase tracking-wider text-stone-500 mb-2">
               Email
             </label>
             <input 
               ref={emailRef}
+              id="signup-email"
               type="email" 
+              aria-required="true"
               onFocus={() => setFocused("email")}
               onBlur={() => setFocused(null)}
               className={`w-full border-b border-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors bg-transparent ${focused === "email" ? "border-stone-900" : ""}`}
@@ -69,11 +82,13 @@ export function SignUp() {
           </div>
           
           <div>
-            <label className="block text-xs uppercase tracking-wider text-stone-500 mb-2">
+            <label htmlFor="signup-password" className="block text-xs uppercase tracking-wider text-stone-500 mb-2">
               Password
             </label>
             <PasswordInput 
               ref={passwordRef}
+              id="signup-password"
+              aria-required="true"
               onFocus={() => setFocused("password")}
               onBlur={() => setFocused(null)}
               placeholder="password"

@@ -12,12 +12,12 @@ interface ButtonProps {
 }
 
 const variantClasses = {
-    "primary": "btn-primary text-white font-medium",
-    "secondary": "btn-secondary text-white",
-    "ghost": "text-gray-400 hover:text-white hover:bg-white/5",
+    "primary": "bg-[#1c1917] text-white font-medium",
+    "secondary": "bg-[#57534e] text-white",
+    "ghost": "text-[#a8a29e] hover:text-white hover:bg-white/5",
 };
 
-const defaultStyles = "px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition-all duration-200";
+const defaultStyles = "px-4 py-2.5 rounded-md flex items-center justify-center gap-2 transition-all duration-200 border border-transparent";
 
 
 export function Button({variant, text, startIcon, onClick, fullWidth, loading, disabled, className = ""}: ButtonProps) {

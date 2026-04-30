@@ -49,7 +49,18 @@ export function useContent(): UseContentReturn {
             setContents(response.data.allContent || []);
             setPagination(response.data.pagination || null);
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Failed to fetch content");
+            if (axios.isAxiosError(err)) {
+                if (err.response?.status === 401) {
+                    localStorage.removeItem("token");
+                    window.location.href = "/signin";
+                } else if (!err.response) {
+                    setError("Unable to connect. Check your internet connection.");
+                } else {
+                    setError("Failed to load your content.");
+                }
+            } else {
+                setError("Something went wrong.");
+            }
         } finally {
             setLoading(false);
         }
@@ -75,7 +86,11 @@ export function useContent(): UseContentReturn {
             });
             setContents(prev => prev.filter(c => c.contentId !== contentId));
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Failed to delete content");
+            if (axios.isAxiosError(err) && !err.response) {
+                setError("Unable to connect. Check your internet connection.");
+            } else {
+                setError("Failed to delete. Please try again.");
+            }
         }
     }, []);
 

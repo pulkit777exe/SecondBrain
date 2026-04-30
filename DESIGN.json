@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-04-30T13:00:00.000Z",
+  "title": "Design System: SecondBrain",
+  "extensions": {
+    "colorMeta": {
+      "background": { "role": "neutral", "displayName": "Warm Stone", "canonical": "oklch(98% 0.01 50)", "tonalRamp": ["#fafaf9", "#f5f5f4", "#e7e5e4", "#d6d3d1", "#a8a29e", "#78716c", "#57534e", "#44403c"] },
+      "text-primary": { "role": "neutral", "displayName": "Rich Warm Black", "canonical": "oklch(25% 0.01 50)", "tonalRamp": ["#1c1917", "#292524", "#44403c", "#57534e", "#78716c", "#a8a29e", "#d6d3d1", "#e7e5e4"] },
+      "surface-white": { "role": "neutral", "displayName": "Paper White", "canonical": "oklch(100% 0 0)", "tonalRamp": ["#ffffff", "#fafaf9", "#f5f5f4", "#e7e5e4", "#d6d3d1", "#a8a29e", "#78716c", "#57534e"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Playfair Display", "purpose": "Editorial headings — brings warmth and sophistication" },
+      "body": { "displayName": "DM Sans", "purpose": "Readable, invisible utility text" }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "transition-default", "value": "all 0.2s ease-out", "purpose": "Standard state transition timing" },
+      { "name": "transition-card", "value": "all 0.3s ease-out", "purpose": "Card hover transition" }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Default action button — dark background, white text",
+      "html": "<button class=\"ds-btn-primary\">Get Started</button>",
+      "css": ".ds-btn-primary { background: #1c1917; color: #ffffff; padding: 10px 16px; border-radius: 8px; border: none; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; transition: all 0.2s ease-out; } .ds-btn-primary:hover { opacity: 0.9; } .ds-btn-primary:focus-visible { outline: 2px solid rgba(28, 25, 23, 0.3); outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Subtle secondary action — transparent with muted text",
+      "html": "<button class=\"ds-btn-ghost\">Cancel</button>",
+      "css": ".ds-btn-ghost { background: transparent; color: #a8a29e; padding: 10px 16px; border-radius: 8px; border: none; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; transition: all 0.2s ease-out; } .ds-btn-ghost:hover { color: #ffffff; background: rgba(255, 255, 255, 0.05); }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Content card — flat white with subtle border",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Saved Content</div></div>",
+      "css": ".ds-card { background: #ffffff; border: 1px solid #e7e5e4; border-radius: 2px; padding: 16px; transition: border-color 0.3s ease-out; } .ds-card:hover { border-color: #a8a29e; } .ds-card-title { font-family: 'Playfair Display', Georgia, serif; font-size: 16px; color: #1c1917; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Standard text field — bordered, rounded, clean",
+      "html": "<input class=\"ds-input\" placeholder=\"Enter text...\" />",
+      "css": ".ds-input { width: 100%; background: #ffffff; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px 16px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: #1c1917; transition: border-color 0.2s ease-out; } .ds-input::placeholder { color: #a8a29e; } .ds-input:focus { border-color: #a8a29e; outline: 2px solid rgba(28, 25, 23, 0.3); outline-offset: 2px; }"
+    },
+    {
+      "name": "Tag Chip",
+      "kind": "chip",
+      "refersTo": "tag",
+      "description": "Small label for categorization",
+      "html": "<span class=\"ds-tag\">#tag</span>",
+      "css": ".ds-tag { display: inline-block; background: #f5f5f4; color: #57534e; font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 2px 8px; border-radius: 2px; transition: background 0.2s ease-out; cursor: default; } .ds-tag:hover { background: #e7e5e4; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Personal Archive",
+    "overview": "A quiet digital notebook for personal knowledge — not social performance. This design system recedes entirely, letting saved content take center stage. The interface should feel like a well-worn, well-organized library: sophisticated, deep, and deeply personal. Nothing competes for attention.",
+    "keyCharacteristics": [
+      "Content first — the UI fades away",
+      "Warm stone palette with sophisticated depth",
+      "Flat by default, tonal shifts on interaction",
+      "Playfair Display for editorial elegance, DM Sans for readability",
+      "2px radius for cards, 8px for interactive elements"
+    ],
+    "rules": [
+      { "name": "The Restraint Rule", "body": "Accent colors appear only in platform badges to identify content type. The system is primarily monochrome.", "section": "colors" },
+      { "name": "The Typography Rule", "body": "Headings use Playfair Display for editorial warmth. Everything else uses DM Sans.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat. Elevation comes only from tonal shifts in background and border, never from shadows.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use the warm stone background (#fafaf9) — never pure white for the page background",
+      "Do use 2px radius on cards and tags — keep them sharp and editorial",
+      "Do use 8px radius on interactive elements (buttons, inputs)",
+      "Do use Playfair Display for headings — it adds the editorial warmth",
+      "Do use DM Sans for body text — it's readable and invisible",
+      "Do use platform accent colors only in small badges",
+      "Do respect reduced motion preferences"
+    ],
+    "donts": [
+      "Don't use shadows — this is a flat design",
+      "Don't use gradients — no decorative treatments",
+      "Don't use glassmorphism — no blurs or transparency layers",
+      "Don't use border-left or border-right as accent stripes",
+      "Don't use gradient text — solid colors only",
+      "Don't make cards larger than needed — content first",
+      "Don't default to modals"
+    ]
+  }
+}
