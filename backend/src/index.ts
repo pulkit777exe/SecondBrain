@@ -1,15 +1,14 @@
+import 'dotenv/config'
 import express from 'express'
-import dotenv from 'dotenv'
 import { UserRouter } from './routes/UserRouter'
 import { ContentRouter } from './routes/ContentRouter'
 import { BrainRouter } from './routes/BrainRouter'
 import cors from 'cors'
-dotenv.config();
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 const WEBSITE_URL = process.env.WEBSITE_URL;
 
-const app = express()
+const app = express();
 
 app.use(cors({
     origin: [`${WEBSITE_URL}`, 'http://localhost:5173']
@@ -25,4 +24,4 @@ app.get('/', (req, res) => {
     })
 })
 
-app.listen(PORT)
+app.listen(PORT);

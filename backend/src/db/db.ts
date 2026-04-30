@@ -2,12 +2,10 @@ import mongoose, { model, Schema } from "mongoose";
 
 async function connectDB() {
   try {
-    await mongoose.connect(
-      process.env.META_PUBLIC_MONGODB_URI as unknown as string
-    );
+    await mongoose.connect(process.env.META_PUBLIC_MONGODB_URI as string);
     console.log("MONGO_DB Connected!");
   } catch (err) {
-    console.error("Error connecting to the MONGO_DB URI");
+    console.error("Error connecting to MongoDB:", err);
   }
 }
 

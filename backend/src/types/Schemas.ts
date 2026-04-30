@@ -1,6 +1,8 @@
 import { z } from "zod";
 import  { contentTypes } from "../db/db";
 
+const allContentTypes = ["youtube", "twitter", "instagram", "reddit", "github", "linkedin", "spotify", "soundcloud", "loom", ...contentTypes] as const;
+
 const TagSchema = z.object({
     tagId: z.string(),
     title: z
@@ -18,7 +20,7 @@ export const AuthSchema = z.object({
 
 export const ContentSchema = z.object({
     link: z.string().min(1, {message: "Enter a valid link"}),
-    type: z.enum(contentTypes, {message: "Enter a valid type"}),
+    type: z.enum(allContentTypes, {message: "Enter a valid type"}),
     title: z.string().min(1, {message: "Enter a title"}),
     tags: z.array(TagSchema).optional(),
     contentId: z.string().optional()
@@ -26,7 +28,7 @@ export const ContentSchema = z.object({
 
 export const CreateContentSchema = z.object({
     link: z.string().url({message: "Enter a valid URL"}),
-    type: z.enum(contentTypes, {message: "Enter a valid type"}),
+    type: z.enum(allContentTypes, {message: "Enter a valid type"}),
     title: z.string().min(1, {message: "Enter a title"}).max(100),
     tags: z.array(z.string()).optional()
 })

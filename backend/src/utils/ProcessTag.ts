@@ -12,7 +12,9 @@ export const ProcessTags = async (tags: string[]) => {
                 console.warn("Duplicate tags are skipped");
             });
         }
+        return tagDocs;
     } catch (err) {
         console.error("Unexpected error during tag insertion", err);
+        return [];
     }
 }

@@ -33,7 +33,7 @@ ContentRouter.post("/", authMiddleware, async (req: Request, res: Response) => {
         }
 
         const tags = data.tags || [];
-        await ProcessTags(tags);
+        const tagObjects = await ProcessTags(tags);
         await QdrantUpsertPoints({ title: data.title, contentId, tags });
 
         await ContentModel.create({
@@ -41,7 +41,7 @@ ContentRouter.post("/", authMiddleware, async (req: Request, res: Response) => {
             link: data.link,
             type: data.type,
             title: data.title,
-            tags,
+            tags: tagObjects,
             userId
         });
         res.status(200).json({
