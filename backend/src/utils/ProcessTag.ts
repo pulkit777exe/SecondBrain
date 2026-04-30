@@ -1,10 +1,10 @@
 import { TagModel } from "../db/db";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "crypto";
 
 export const ProcessTags = async (tags: string[]) => {
     try {
         const tagDocs = tags.map(title => ({
-            tagId: uuidv4(),
+            tagId: randomUUID(),
             title: title.toLowerCase().trim().replace(/[&\/\\#, +()$~%.'":*?<>{}]/g, '-').slice(0, 12)
         }));
         if (tagDocs.length > 0) {

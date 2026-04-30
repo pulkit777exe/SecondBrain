@@ -5,12 +5,12 @@ import { ProcessTags } from "../utils/ProcessTag";
 import { QdrantDelete, QdrantSearch, QdrantUpsertPoints } from "../utils/QdrantProcessing";
 import { ContentModel } from "../db/db";
 import { getEmbeddings } from "../utils/TextEmbedding";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "crypto";
 
 export const ContentRouter = Router();
 
 function generateContentId(): string {
-    return uuidv4();
+    return randomUUID();
 }
 
 ContentRouter.post("/", authMiddleware, async (req: Request, res: Response) => {
