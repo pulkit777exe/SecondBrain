@@ -7,7 +7,7 @@ export interface Content {
     contentId: string;
     title: string;
     link: string;
-    type: "youtube" | "twitter";
+    type: "youtube" | "twitter" | "instagram" | "reddit" | "github" | "linkedin" | "spotify" | "soundcloud" | "loom";
     tags: { title: string }[];
     userId: string;
 }
@@ -39,10 +39,11 @@ export function useContent(): UseContentReturn {
     const fetchContent = useCallback(async (pageNum: number = 1) => {
         setLoading(true);
         setError(null);
+        const token = localStorage.getItem("token");
         try {
             const response = await axios.get(`${BACKEND_URL}/v1/content?page=${pageNum}&limit=20`, {
                 headers: {
-                    "Authorization": localStorage.getItem("token")
+                    "Authorization": `Bearer ${token}`
                 }
             });
             setContents(response.data.allContent || []);
@@ -64,10 +65,11 @@ export function useContent(): UseContentReturn {
     }, [fetchContent]);
 
     const deleteContent = useCallback(async (contentId: string) => {
+        const token = localStorage.getItem("token");
         try {
             await axios.delete(`${BACKEND_URL}/v1/content`, {
                 headers: {
-                    "Authorization": localStorage.getItem("token")
+                    "Authorization": `Bearer ${token}`
                 },
                 data: { contentId }
             });

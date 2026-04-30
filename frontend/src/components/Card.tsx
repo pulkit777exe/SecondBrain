@@ -1,58 +1,188 @@
+import { useEffect, useState } from "react";
 import { DeleteIcon } from "../icons/DeleteIcon";
 import { ShareIcon } from "../icons/ShareIcon";
 import { YoutubeIcon } from "../icons/YoutubeIcon";
 import { TwitterIcon } from "../icons/TwitterIcon";
+import { InstagramIcon } from "../icons/InstagramIcon";
+import { RedditIcon } from "../icons/RedditIcon";
+import { GithubIcon } from "../icons/GithubIcon";
+import { LinkedInIcon } from "../icons/LinkedInIcon";
+import { SpotifyIcon } from "../icons/SpotifyIcon";
+import { SoundCloudIcon } from "../icons/SoundCloudIcon";
+import { LoomIcon } from "../icons/LoomIcon";
 import { EditIcon } from "../icons/EditIcon";
+
+type ContentType = "youtube" | "twitter" | "instagram" | "reddit" | "github" | "linkedin" | "spotify" | "soundcloud" | "loom";
 
 interface CardProps {
     title: string,
     link: string,
-    type: "youtube" | "twitter",
+    type: ContentType,
     contentId: string,
     tags?: { title: string }[];
     onDelete?: (contentId: string) => void
     onEdit?: (contentId: string) => void
 }
 
-export function Card({title, link, type, contentId, tags, onDelete, onEdit}: CardProps) {
-    const getEmbedUrl = (url: string, contentType: string) => {
-        if (contentType === "youtube") {
-            const videoId = url.split("v=")[1]?.split("&")[0];
-            return `https://www.youtube.com/embed/${videoId}`;
-        }
-        return url;
-    };
+function getIcon(type: ContentType) {
+    switch (type) {
+        case "youtube": return <YoutubeIcon />;
+        case "twitter": return <TwitterIcon />;
+        case "instagram": return <InstagramIcon />;
+        case "reddit": return <RedditIcon />;
+        case "github": return <GithubIcon />;
+        case "linkedin": return <LinkedInIcon />;
+        case "spotify": return <SpotifyIcon />;
+        case "soundcloud": return <SoundCloudIcon />;
+        case "loom": return <LoomIcon />;
+    }
+}
 
-    return (
-        <div className="group bg-white rounded-sm border border-stone-200 p-4 hover:border-stone-400 transition-all duration-300">
-            <div className="relative">
-                {type === "youtube" && (
+function getColor(type: ContentType) {
+    switch (type) {
+        case "youtube": return "bg-red-100";
+        case "twitter": return "bg-sky-100";
+        case "instagram": return "bg-pink-100";
+        case "reddit": return "bg-orange-100";
+        case "github": return "bg-gray-100";
+        case "linkedin": return "bg-blue-100";
+        case "spotify": return "bg-green-100";
+        case "soundcloud": return "bg-orange-100";
+        case "loom": return "bg-purple-100";
+    }
+}
+
+function getPlatformUrl(url: string, type: ContentType): string {
+    switch (type) {
+        case "twitter":
+            return url.replace("x.com", "twitter.com");
+        case "instagram":
+            return url.includes("instagram.com") ? url : `https://www.instagram.com/${url.replace(/[^a-zA-Z0-9._]/g, "")}`;
+        case "reddit":
+            return url.includes("reddit.com") ? url : `https://www.reddit.com/${url}`;
+        case "github":
+            return url.includes("github.com") ? url : `https://github.com/${url}`;
+        case "linkedin":
+            return url.includes("linkedin.com") ? url : `https://www.linkedin.com/posts/${url}`;
+        default:
+            return url;
+    }
+}
+
+function getEmbedUrl(url: string, type: ContentType): string | null {
+    if (type === "youtube") {
+        const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+        return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+    }
+    if (type === "spotify") {
+        const spotifyMatch = url.match(/spotify\.com\/(track|episode|playlist|album|show)\/([a-zA-Z0-9]+)/);
+        if (spotifyMatch) {
+            return `https://open.spotify.com/embed/${spotifyMatch[1]}/${spotifyMatch[2]}`;
+        }
+    }
+    if (type === "loom") {
+        const loomMatch = url.match(/loom\.com\/(?:share|embed)\/([a-zA-Z0-9]+)/);
+        if (loomMatch) return `https://www.loom.com/embed/${loomMatch[1]}`;
+    }
+    return null;
+}
+
+function getOembedUrl(url: string, type: ContentType): string | null {
+    if (type === "twitter") {
+        const match = url.match(/twitter\.com\/([^\/]+)\/status\/(\d+)/);
+        if (match) return `https://publish.twitter.com/oembed?url=https://twitter.com/${match[1]}/status/${match[2]}&hide_media=false`;
+    }
+    if (type === "reddit") {
+        const match = url.match(/reddit\.com\/r\/([^\/]+)\/comments\/([a-z0-9]+)/i);
+        if (match) return `https://www.reddit.com/oembed?url=https://www.reddit.com/r/${match[1]}/comments/${match[2]}/`;
+    }
+    if (type === "instagram") {
+        const match = url.match(/instagram\.com\/p\/([a-zA-Z0-9_-]+)/);
+        if (match) return `https://api.instagram.com/oembed?url=https://www.instagram.com/p/${match[1]}/`;
+    }
+    return null;
+}
+
+export function Card({title, link, type, contentId, tags, onDelete, onEdit}: CardProps) {
+    const [oembedHtml, setOembedHtml] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const embedUrl = getEmbedUrl(link, type);
+    const oembedUrl = getOembedUrl(link, type);
+
+    useEffect(() => {
+        if (oembedUrl && !oembedHtml) {
+            setLoading(true);
+            fetch(oembedUrl)
+                .then(res => res.json())
+                .then(data => {
+                    const html = (data.html || "").replace(/<script[\s\S]*?<\/script>/gi, "");
+                    setOembedHtml(html);
+                    setLoading(false);
+                })
+                .catch(() => setLoading(false));
+        }
+    }, [oembedUrl, oembedHtml]);
+
+    const getDisplayContent = () => {
+        if (embedUrl) {
+            if (type === "youtube") {
+                return (
                     <div className="aspect-video rounded-sm overflow-hidden bg-stone-100">
                         <iframe 
-                            src={getEmbedUrl(link, "youtube")} 
+                            src={embedUrl} 
                             className="w-full h-full object-cover"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
                         />
                     </div>
-                )}
+                );
+            }
+            if (type === "spotify" || type === "loom") {
+                return (
+                    <iframe 
+                        src={embedUrl}
+                        className="w-full h-32 rounded-sm"
+                        frameBorder="0"
+                        allowFullScreen
+                    />
+                );
+            }
+        }
 
-                {type === "twitter" && (
-                    <a 
-                        href={link.replace("x.com", "twitter.com")} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="block p-6 bg-stone-50 rounded-sm border border-stone-200 hover:border-stone-400 transition-colors"
-                    >
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center">
-                                <TwitterIcon />
-                            </div>
-                            <span className="text-sm text-stone-500">View on Twitter</span>
-                        </div>
-                        <p className="text-stone-900 font-medium line-clamp-2">{title}</p>
-                    </a>
-                )}
+        if (oembedHtml) {
+            return (
+                <div dangerouslySetInnerHTML={{ __html: oembedHtml }} />
+            );
+        }
+
+        if (loading) {
+            return (
+                <div className="flex items-center justify-center py-8">
+                    <div className="w-5 h-5 border border-stone-300 border-t-stone-600 rounded-full animate-spin" />
+                </div>
+            );
+        }
+
+        return (
+            <a 
+                href={getPlatformUrl(link, type)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 py-6 text-sm text-stone-600 hover:text-stone-800 bg-stone-50"
+            >
+                {getIcon(type)}
+                <span>View on {type.charAt(0).toUpperCase() + type.slice(1)}</span>
+            </a>
+        );
+    };
+
+    return (
+        <div className="group bg-white rounded-sm border border-stone-200 p-4 hover:border-stone-400 transition-all duration-300">
+            <div className="relative">
+                <div className="rounded-sm overflow-hidden bg-white">
+                    {getDisplayContent()}
+                </div>
 
                 <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
                     <button 
@@ -80,8 +210,8 @@ export function Card({title, link, type, contentId, tags, onDelete, onEdit}: Car
 
             <div className="pt-3">
                 <div className="flex items-center gap-2 mb-2">
-                    <div className={`p-1 rounded-sm ${type === "youtube" ? "bg-red-100" : "bg-sky-100"}`}>
-                        {type === "youtube" ? <YoutubeIcon /> : <TwitterIcon />}
+                    <div className={`p-1 rounded-sm ${getColor(type)}`}>
+                        {getIcon(type)}
                     </div>
                     <span className="text-stone-900 font-medium text-sm truncate">{title}</span>
                 </div>
