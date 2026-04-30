@@ -1,20 +1,23 @@
 import { useRef, useState, useEffect } from "react";
 import { CrossIcon } from "../icons/CrossIcon";
 import { BACKEND_URL } from "../config";
-import axios from "axios";
 import { YoutubeIcon } from "../icons/YoutubeIcon";
 import { TwitterIcon } from "../icons/TwitterIcon";
+import { InstagramIcon } from "../icons/InstagramIcon";
+import { RedditIcon } from "../icons/RedditIcon";
+import { GithubIcon } from "../icons/GithubIcon";
+import { LinkedInIcon } from "../icons/LinkedInIcon";
+import { SpotifyIcon } from "../icons/SpotifyIcon";
+import { SoundCloudIcon } from "../icons/SoundCloudIcon";
+import { LoomIcon } from "../icons/LoomIcon";
 
-enum ContentType {
-    Youtube = "youtube",
-    Twitter = "twitter"
-}
+type ContentTypeOption = "youtube" | "twitter" | "instagram" | "reddit" | "github" | "linkedin" | "spotify" | "soundcloud" | "loom";
 
 interface ContentData {
     contentId: string;
     title: string;
     link: string;
-    type: "youtube" | "twitter";
+    type: ContentTypeOption;
     tags?: { title: string }[];
 }
 
@@ -26,23 +29,50 @@ interface ContentModalProps {
     content?: ContentData | null;
 }
 
+const contentTypes: { type: ContentTypeOption; label: string; icon: string }[] = [
+    { type: "youtube", label: "YouTube", icon: "youtube" },
+    { type: "twitter", label: "Twitter", icon: "twitter" },
+    { type: "instagram", label: "Instagram", icon: "instagram" },
+    { type: "reddit", label: "Reddit", icon: "reddit" },
+    { type: "github", label: "GitHub", icon: "github" },
+    { type: "linkedin", label: "LinkedIn", icon: "linkedin" },
+    { type: "spotify", label: "Spotify", icon: "spotify" },
+    { type: "soundcloud", label: "SoundCloud", icon: "soundcloud" },
+    { type: "loom", label: "Loom", icon: "loom" },
+];
+
+function getIconComponent(icon: string) {
+    switch (icon) {
+        case "youtube": return <YoutubeIcon />;
+        case "twitter": return <TwitterIcon />;
+        case "instagram": return <InstagramIcon />;
+        case "reddit": return <RedditIcon />;
+        case "github": return <GithubIcon />;
+        case "linkedin": return <LinkedInIcon />;
+        case "spotify": return <SpotifyIcon />;
+        case "soundcloud": return <SoundCloudIcon />;
+        case "loom": return <LoomIcon />;
+        default: return <span className="text-xs">{icon[0].toUpperCase()}</span>;
+    }
+}
+
 export function ContentModal({open, onClose, onSuccess, editMode, content}: ContentModalProps) {
     const titleRef = useRef<HTMLInputElement>(null);
     const linkRef = useRef<HTMLInputElement>(null);
     const tagsRef = useRef<HTMLInputElement>(null);
-    const [type, setType] = useState<ContentType>(ContentType.Youtube);
+    const [type, setType] = useState<ContentTypeOption>("youtube");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (open && editMode && content) {
-            setType(content.type as ContentType);
+            setType(content.type);
             const tagStr = content.tags?.map((t: { title: string }) => t.title).join(", ") || "";
             if (titleRef.current) titleRef.current.value = content.title;
             if (linkRef.current) linkRef.current.value = content.link;
             if (tagsRef.current) tagsRef.current.value = tagStr;
         } else if (open && !editMode) {
-            setType(ContentType.Youtube);
+            setType("youtube");
             if (titleRef.current) titleRef.current.value = "";
             if (linkRef.current) linkRef.current.value = "";
             if (tagsRef.current) tagsRef.current.value = "";
@@ -62,26 +92,32 @@ export function ContentModal({open, onClose, onSuccess, editMode, content}: Cont
 
         setLoading(true);
         setError(null);
+        const token = localStorage.getItem("token");
 
         try {
+            const payload = {
+                link,
+                title,
+                type,
+                tags: tagList
+            };
+
+            const headers: Record<string, string> = {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            };
+
             if (editMode && content) {
-                await axios.put(`${BACKEND_URL}/v1/content`, {
-                    contentId: content.contentId,
-                    link,
-                    title,
-                    type,
-                    tags: tagList
-                }, {
-                    headers: { "Authorization": localStorage.getItem("token") }
+                await fetch(`${BACKEND_URL}/v1/content`, {
+                    method: "PUT",
+                    headers,
+                    body: JSON.stringify({ ...payload, contentId: content.contentId })
                 });
             } else {
-                await axios.post(`${BACKEND_URL}/v1/content`, {
-                    link,
-                    title,
-                    type,
-                    tags: tagList
-                }, {
-                    headers: { "Authorization": localStorage.getItem("token") }
+                await fetch(`${BACKEND_URL}/v1/content`, {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify(payload)
                 });
             }
             onClose();
@@ -138,31 +174,22 @@ export function ContentModal({open, onClose, onSuccess, editMode, content}: Cont
                 
                 <div className="mt-6">
                     <label className="block text-xs uppercase tracking-wider text-stone-500 mb-3">Type</label>
-                    <div className="flex gap-2">
-                        <button
-                            type="button"
-                            onClick={() => setType(ContentType.Youtube)}
-                            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-sm border transition-all duration-200 ${
-                                type === ContentType.Youtube 
-                                    ? "border-red-400 bg-red-50 text-red-600" 
-                                    : "border-stone-200 hover:border-stone-400 text-stone-500"
-                            }`}
-                        >
-                            <YoutubeIcon />
-                            <span className="text-sm font-medium">YouTube</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setType(ContentType.Twitter)}
-                            className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-sm border transition-all duration-200 ${
-                                type === ContentType.Twitter 
-                                    ? "border-sky-400 bg-sky-50 text-sky-600" 
-                                    : "border-stone-200 hover:border-stone-400 text-stone-500"
-                            }`}
-                        >
-                            <TwitterIcon />
-                            <span className="text-sm font-medium">Twitter</span>
-                        </button>
+                    <div className="grid grid-cols-3 gap-2">
+                        {contentTypes.map((ct) => (
+                            <button
+                                key={ct.type}
+                                type="button"
+                                onClick={() => setType(ct.type)}
+                                className={`flex items-center justify-center gap-2 p-2.5 rounded-sm border transition-all duration-200 text-sm ${
+                                    type === ct.type 
+                                        ? "border-stone-900 bg-stone-100 text-stone-900" 
+                                        : "border-stone-200 hover:border-stone-400 text-stone-500"
+                                }`}
+                            >
+                                {getIconComponent(ct.icon)}
+                                <span className="hidden sm:inline">{ct.label}</span>
+                            </button>
+                        ))}
                     </div>
                 </div>
                 
