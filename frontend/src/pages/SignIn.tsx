@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { BACKEND_URL } from "../config";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { PasswordInput } from "../components/PasswordInput";
 
 export function SignIn() {
   const emailRef = useRef<HTMLInputElement>(null);
@@ -75,12 +76,11 @@ export function SignIn() {
             <label className="block text-xs uppercase tracking-wider text-stone-500 mb-2">
               Password
             </label>
-            <input 
+            <PasswordInput 
               ref={passwordRef}
-              type="password" 
               onFocus={() => setFocused("password")}
               onBlur={() => setFocused(null)}
-              className={`w-full border-b border-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors bg-transparent ${focused === "password" ? "border-stone-900" : ""}`}
+              placeholder="password"
             />
           </div>
         </div>
