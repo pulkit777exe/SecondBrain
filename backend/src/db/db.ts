@@ -22,7 +22,7 @@ const ContentSchema = new Schema(
   {
     title: { type: String, requred: true },
     link: { type: String, required: true },
-    type: { type: String, required: true },
+    type: { type: String, required: true, index: true },
     tags: [
       {
         tagId: {
@@ -35,7 +35,7 @@ const ContentSchema = new Schema(
         },
       },
     ],
-    userId: { type: mongoose.Types.ObjectId, ref: "User", required: true },
+    userId: { type: mongoose.Types.ObjectId, ref: "User", required: true, index: true },
     contentId: { type: String, required: true, unique: true },
   },
   {
@@ -43,11 +43,14 @@ const ContentSchema = new Schema(
   }
 );
 
+ContentSchema.index({ userId: 1, createdAt: -1 });
+
 const TagSchema = new Schema({
     title: {
         type: String,
         required: true,
-        set: (a: string) => a.toLowerCase().trim()
+        set: (a: string) => a.toLowerCase().trim(),
+        index: true
     },
     tagId: {
         type: String, 
@@ -57,7 +60,7 @@ const TagSchema = new Schema({
 })
 
 const LinkSchema = new Schema({
-  hash: { type: String, required: true },
+  hash: { type: String, required: true, index: true },
   userId: { type: mongoose.Types.ObjectId, ref: "User", required: true },
 });
 

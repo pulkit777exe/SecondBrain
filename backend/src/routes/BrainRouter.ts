@@ -65,11 +65,14 @@ BrainRouter.get("/:shareLink", async(req:Request, res:Response)  => {
             })
             return ;
         } else{
+            const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
             const content = await ContentModel.find({
                 userId: collectionLink.userId.toString()
             })
             .populate('tags', 'title')
             .populate('userId', 'username')
+            .limit(limit)
+            .sort({ createdAt: -1 })
 
             res.status(200).json({
                 content, 

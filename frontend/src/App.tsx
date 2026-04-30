@@ -1,11 +1,20 @@
-import { useEffect } from "react";
+import { useEffect, Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { SignUp } from "./pages/SignUp";
-import { SignIn } from "./pages/SignIn";
-import Dashboard from "./pages/Dashboard";
-import SharedPage from "./pages/SharedPage";
-import NotFound from "./pages/NotFound";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+
+const SignUp = lazy(() => import("./pages/SignUp").then(m => ({ default: m.SignUp })));
+const SignIn = lazy(() => import("./pages/SignIn").then(m => ({ default: m.SignIn })));
+const Dashboard = lazy(() => import("./pages/Dashboard").then(m => ({ default: m.default })));
+const SharedPage = lazy(() => import("./pages/SharedPage").then(m => ({ default: m.default })));
+const NotFound = lazy(() => import("./pages/NotFound").then(m => ({ default: m.default })));
+
+function Loading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-stone-50">
+      <div className="w-6 h-6 border-2 border-stone-300 border-t-stone-600 rounded-full animate-spin" />
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem("token");
@@ -32,6 +41,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
+        <Suspense fallback={<Loading />}>
         <Routes>
           <Route element={<Landing />} path="/" />
           <Route element={<SignIn />} path="/signin" />
@@ -40,6 +50,7 @@ export default function App() {
           <Route element={<SharedPage />} path="/shared/:shareLink" />
           <Route element={<NotFound />} path="*" />
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </ErrorBoundary>
   );

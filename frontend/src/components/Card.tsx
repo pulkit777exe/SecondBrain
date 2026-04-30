@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+
+const oembedCache = new Map<string, string>();
 import { DeleteIcon } from "../icons/DeleteIcon";
 import { ShareIcon } from "../icons/ShareIcon";
 import { YoutubeIcon } from "../icons/YoutubeIcon";
@@ -103,7 +105,7 @@ function getOembedUrl(url: string, type: ContentType): string | null {
     return null;
 }
 
-export function Card({title, link, type, contentId, tags, onDelete, onEdit}: CardProps) {
+function CardComponent({title, link, type, contentId, tags, onDelete, onEdit}: CardProps) {
     const [oembedHtml, setOembedHtml] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -111,12 +113,21 @@ export function Card({title, link, type, contentId, tags, onDelete, onEdit}: Car
     const oembedUrl = getOembedUrl(link, type);
 
     useEffect(() => {
-        if (oembedUrl && !oembedHtml) {
+        if (!oembedUrl) return;
+        
+        const cached = oembedCache.get(oembedUrl);
+        if (cached) {
+            setOembedHtml(cached);
+            return;
+        }
+        
+        if (!oembedHtml) {
             setLoading(true);
             fetch(oembedUrl)
                 .then(res => res.json())
                 .then(data => {
                     const html = (data.html || "").replace(/<script[\s\S]*?<\/script>/gi, "");
+                    oembedCache.set(oembedUrl, html);
                     setOembedHtml(html);
                     setLoading(false);
                 })
@@ -235,3 +246,13 @@ export function Card({title, link, type, contentId, tags, onDelete, onEdit}: Car
         </div>
     );
 }
+
+export const Card = React.memo(CardComponent, (prevProps, nextProps) => {
+    return (
+        prevProps.title === nextProps.title &&
+        prevProps.link === nextProps.link &&
+        prevProps.type === nextProps.type &&
+        prevProps.contentId === nextProps.contentId &&
+        prevProps.tags === nextProps.tags
+    );
+});

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Card } from "../components/Card"
 import { ContentModal } from "../components/ContentModal"
 import { useContent, Content } from "../hooks/useContent";
@@ -77,20 +77,20 @@ export default function Dashboard() {
     setShowDeleteConfirm(null);
   }
 
-  function openAddModal() {
+  const openAddModal = useCallback(() => {
     setEditMode(false);
     setEditingContent(null);
     setModalOpen(true);
-  }
+  }, []);
 
-  function openEditModal(contentId: string) {
+  const openEditModal = useCallback((contentId: string) => {
     const content = contents.find(c => c.contentId === contentId);
     if (content) {
       setEditMode(true);
       setEditingContent(content);
       setModalOpen(true);
     }
-  }
+  }, [contents]);
 
   const filteredContents = useMemo(() => {
     let items = contents;
@@ -106,14 +106,16 @@ export default function Dashboard() {
 
   const contentTypes = ["youtube", "twitter", "instagram", "reddit", "github", "linkedin", "spotify", "soundcloud", "loom"];
   
-  const menuItems = [
-    { key: "all", label: "All", count: contents.length },
-    ...contentTypes.map(ct => ({
-      key: ct,
-      label: ct.charAt(0).toUpperCase() + ct.slice(1),
-      count: contents.filter(c => c.type === ct).length
-    }))
-  ];
+  const menuItems = useMemo(() => {
+    return [
+      { key: "all", label: "All", count: contents.length },
+      ...contentTypes.map(ct => ({
+        key: ct,
+        label: ct.charAt(0).toUpperCase() + ct.slice(1),
+        count: contents.filter(c => c.type === ct).length
+      }))
+    ];
+  }, [contents]);
 
   return (
     <div className="min-h-screen w-full bg-stone-50 flex">
