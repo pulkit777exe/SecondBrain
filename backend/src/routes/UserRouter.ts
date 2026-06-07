@@ -1,6 +1,7 @@
 import { Request, Response, Router } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import rateLimit from "express-rate-limit";
 import { AuthSchema } from "../types/Schemas";
 import { UserModel } from "../db/db";
 import dotenv from "dotenv";
@@ -8,6 +9,16 @@ dotenv.config();
 
 export const UserRouter = Router();
 const salt_rounds = 3;
+
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    message: { message: "Too many attempts, please try again later" },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+UserRouter.use(authLimiter);
 
 UserRouter.post('/register', async (req: Request, res: Response) => {
     try {
@@ -31,7 +42,7 @@ UserRouter.post('/register', async (req: Request, res: Response) => {
         } catch (err) {
         console.error(err);
         res.status(403).json({
-            message: err
+            message: "Registration failed"
         })
     }
 })
@@ -80,6 +91,8 @@ UserRouter.post("/login", async (req: Request, res: Response) => {
         }
     } catch (err) {
         console.error(err);
-        throw new Error("Error while login route " + err);
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
     }
 })

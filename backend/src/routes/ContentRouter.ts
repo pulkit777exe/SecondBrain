@@ -33,8 +33,7 @@ ContentRouter.post("/", authMiddleware, async (req: Request, res: Response) => {
         }
 
         const tags = data.tags || [];
-        const tagObjects = await ProcessTags(tags);
-        await QdrantUpsertPoints({ title: data.title, contentId, tags });
+        const tagObjects = ProcessTags(tags);
 
         await ContentModel.create({
             contentId,
@@ -42,22 +41,29 @@ ContentRouter.post("/", authMiddleware, async (req: Request, res: Response) => {
             type: data.type,
             title: data.title,
             tags: tagObjects,
-            userId
+            userId,
+            appName: data.appName
         });
+
+        try {
+            await QdrantUpsertPoints({ title: data.title, contentId, tags });
+        } catch (qdrantErr) {
+            console.warn("Qdrant upsert failed, content saved to MongoDB:", qdrantErr);
+        }
         res.status(200).json({
             content: {
                 link: data.link,
                 type: data.type,
                 title: data.title,
                 tags,
-                contentId
+                contentId,
+                appName: data.appName
             }
         })
     } catch (err) {
         console.error(err);
         res.status(500).json({
             message: "Internal Server Error",
-            error: err,
         });
     }
 })
@@ -76,8 +82,6 @@ ContentRouter.get("/", authMiddleware, async (req: Request, res: Response) => {
 
         const [allContent, total] = await Promise.all([
             ContentModel.find({ userId })
-                .populate("userId", "username")
-                .populate("tags", "title")
                 .skip(skip)
                 .limit(limit)
                 .sort({ createdAt: -1 }),
@@ -96,7 +100,6 @@ ContentRouter.get("/", authMiddleware, async (req: Request, res: Response) => {
     } catch (err) {
         res.status(500).json({
             message: "Internal Server Error",
-            error: err,
         });
     }
 })
@@ -119,14 +122,17 @@ ContentRouter.delete('/', authMiddleware, async (req: Request, res: Response) =>
         }
 
         await ContentModel.deleteOne({ contentId, userId });
-        await QdrantDelete(contentId);
+        try {
+            await QdrantDelete(contentId);
+        } catch (qdrantErr) {
+            console.warn("Qdrant delete failed:", qdrantErr);
+        }
         res.status(200).json({
             message: "Deleted",
         });
     } catch (e) {
         res.status(500).json({
             message: "Internal Server Error",
-            error: e,
         });
     }
 });
@@ -165,6 +171,7 @@ ContentRouter.put('/', authMiddleware, async (req: Request, res: Response) => {
                 type: data.type,
                 title: data.title,
                 tags: data.tags || [],
+                appName: data.appName || null,
             },
             { new: true }
         );
@@ -185,27 +192,33 @@ ContentRouter.put('/', authMiddleware, async (req: Request, res: Response) => {
         console.error("Error updating content:", e);
         res.status(500).json({
             message: "Internal Server Error",
-            error: e,
         });
     }
 });
 
 ContentRouter.post('/search', authMiddleware, async(req, res) => {
-    const userId = req.userId;
-    if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-    }
+    try {
+        const userId = req.userId;
+        if (!userId) {
+            res.status(401).json({ message: "Unauthorized" });
+            return;
+        }
 
-    const searchQuery = req.body.search;
-    if (!searchQuery) {
-        res.status(400).json({ message: "Search query required" });
-        return;
-    }
+        const searchQuery = req.body.search;
+        if (!searchQuery) {
+            res.status(400).json({ message: "Search query required" });
+            return;
+        }
 
-    const queryEmbeddings = await getEmbeddings(searchQuery);
-    const response = await QdrantSearch(queryEmbeddings);
-    res.status(200).json({
-        search: response
-    });
+        const queryEmbeddings = await getEmbeddings(searchQuery);
+        const response = await QdrantSearch(queryEmbeddings);
+        res.status(200).json({
+            search: response
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+    }
 });
