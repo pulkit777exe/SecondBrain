@@ -4,6 +4,7 @@ import { ContentModal } from "../components/ContentModal"
 import { useContent, Content } from "../hooks/useContent";
 import { useNavigate } from "react-router-dom";
 import { BACKEND_URL } from "../config";
+import { CONTENT_TYPES } from "../shared/contentTypes";
 import axios from "axios";
 
 type FilterType = "all" | "youtube" | "twitter";
@@ -127,12 +128,10 @@ export default function Dashboard() {
     return items;
   }, [contents, filter, searchQuery]);
 
-  const contentTypes = ["youtube", "twitter", "instagram", "reddit", "github", "linkedin", "spotify", "soundcloud", "loom"];
-  
   const menuItems = useMemo(() => {
     return [
       { key: "all", label: "All", count: contents.length },
-      ...contentTypes.map(ct => ({
+      ...CONTENT_TYPES.map(ct => ({
         key: ct,
         label: ct.charAt(0).toUpperCase() + ct.slice(1),
         count: contents.filter(c => c.type === ct).length
@@ -142,17 +141,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen w-full bg-stone-50 flex">
-      <button 
-        onClick={() => toggleSidebar(!sidebarOpen)}
-        className="fixed top-4 left-4 z-50 p-2 bg-white border border-stone-200 rounded-md shadow-sm hover:bg-stone-50 transition-all"
-        aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
-        title={sidebarOpen ? "Close menu" : "Open menu"}
-      >
-        <svg className="w-5 h-5 text-stone-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-
       {sidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/20 z-30"
@@ -167,9 +155,20 @@ export default function Dashboard() {
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
         flex flex-col
       `}>
-        <div className="p-6 lg:p-8">
-          <p className="text-xs uppercase tracking-[0.15em] text-stone-400 mb-2">SecondBrain</p>
-          <h1 className="text-xl lg:text-2xl font-serif text-stone-900">Your Library</h1>
+        <div className="p-6 lg:p-8 flex items-start justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.15em] text-stone-400 mb-2">SecondBrain</p>
+            <h1 className="text-xl lg:text-2xl font-serif text-stone-900">Your Library</h1>
+          </div>
+          <button 
+            onClick={() => toggleSidebar(false)}
+            className="p-2 -mt-1 text-stone-400 hover:text-stone-900 transition-colors"
+            aria-label="Close sidebar"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
         
         <nav className="flex-1 px-4 lg:px-6 space-y-1">
@@ -209,6 +208,17 @@ export default function Dashboard() {
 
       <div className="flex-1 p-4 lg:p-10 overflow-auto lg:ml-0">
         <div className="max-w-6xl mx-auto">
+          {!sidebarOpen && (
+            <button 
+              onClick={() => toggleSidebar(true)}
+              className="fixed top-4 left-4 z-50 p-2 bg-white border border-stone-200 rounded-md shadow-sm hover:bg-stone-50 transition-all"
+              aria-label="Open sidebar"
+            >
+              <svg className="w-5 h-5 text-stone-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          )}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md flex items-center justify-between">
               <span className="text-red-700 text-sm">{error}</span>
@@ -295,6 +305,7 @@ export default function Dashboard() {
                     type={item.type}
                     link={item.link}
                     title={item.title}
+                    appName={item.appName}
                     tags={item.tags}
                     onDelete={(id) => setShowDeleteConfirm(id)}
                     onEdit={(id) => openEditModal(id)}

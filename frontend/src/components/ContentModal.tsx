@@ -1,6 +1,7 @@
-import { useRef, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { CrossIcon } from "../icons/CrossIcon";
 import { BACKEND_URL } from "../config";
+import { ContentType } from "../shared/contentTypes";
 import { YoutubeIcon } from "../icons/YoutubeIcon";
 import { TwitterIcon } from "../icons/TwitterIcon";
 import { InstagramIcon } from "../icons/InstagramIcon";
@@ -11,13 +12,12 @@ import { SpotifyIcon } from "../icons/SpotifyIcon";
 import { SoundCloudIcon } from "../icons/SoundCloudIcon";
 import { LoomIcon } from "../icons/LoomIcon";
 
-type ContentTypeOption = "youtube" | "twitter" | "instagram" | "reddit" | "github" | "linkedin" | "spotify" | "soundcloud" | "loom";
-
 interface ContentData {
     contentId: string;
     title: string;
     link: string;
-    type: ContentTypeOption;
+    type: ContentType;
+    appName?: string;
     tags?: { title: string }[];
 }
 
@@ -29,7 +29,7 @@ interface ContentModalProps {
     content?: ContentData | null;
 }
 
-const contentTypes: { type: ContentTypeOption; label: string; icon: string }[] = [
+const contentTypes: { type: ContentType; label: string; icon: string }[] = [
     { type: "youtube", label: "YouTube", icon: "youtube" },
     { type: "twitter", label: "Twitter", icon: "twitter" },
     { type: "instagram", label: "Instagram", icon: "instagram" },
@@ -39,6 +39,7 @@ const contentTypes: { type: ContentTypeOption; label: string; icon: string }[] =
     { type: "spotify", label: "Spotify", icon: "spotify" },
     { type: "soundcloud", label: "SoundCloud", icon: "soundcloud" },
     { type: "loom", label: "Loom", icon: "loom" },
+    { type: "other", label: "Other", icon: "other" },
 ];
 
 function getIconComponent(icon: string) {
@@ -57,10 +58,11 @@ function getIconComponent(icon: string) {
 }
 
 export function ContentModal({open, onClose, onSuccess, editMode, content}: ContentModalProps) {
-    const titleRef = useRef<HTMLInputElement>(null);
-    const linkRef = useRef<HTMLInputElement>(null);
-    const tagsRef = useRef<HTMLInputElement>(null);
-    const [type, setType] = useState<ContentTypeOption>("youtube");
+    const [title, setTitle] = useState("");
+    const [link, setLink] = useState("");
+    const [tags, setTags] = useState("");
+    const [type, setType] = useState<ContentType>("youtube");
+    const [appName, setAppName] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -68,23 +70,21 @@ export function ContentModal({open, onClose, onSuccess, editMode, content}: Cont
     useEffect(() => {
         if (open && editMode && content) {
             setType(content.type);
-            const tagStr = content.tags?.map((t: { title: string }) => t.title).join(", ") || "";
-            if (titleRef.current) titleRef.current.value = content.title;
-            if (linkRef.current) linkRef.current.value = content.link;
-            if (tagsRef.current) tagsRef.current.value = tagStr;
+            setTitle(content.title);
+            setLink(content.link);
+            setTags(content.tags?.map((t: { title: string }) => t.title).join(", ") || "");
+            setAppName(content.appName || "");
         } else if (open && !editMode) {
             setType("youtube");
-            if (titleRef.current) titleRef.current.value = "";
-            if (linkRef.current) linkRef.current.value = "";
-            if (tagsRef.current) tagsRef.current.value = "";
+            setTitle("");
+            setLink("");
+            setTags("");
+            setAppName("");
         }
     }, [open, editMode, content]);
 
     async function handleSubmit() {
-        const title = titleRef.current?.value || "";
-        const link = linkRef.current?.value || "";
-        const tagString = tagsRef.current?.value || "";
-        const tagList = tagString.split(",").map(t => t.trim()).filter(Boolean);
+        const tagList = tags.split(",").map(t => t.trim()).filter(Boolean);
         
         if (!title.trim()) {
             setError("Please enter a title");
@@ -108,12 +108,22 @@ export function ContentModal({open, onClose, onSuccess, editMode, content}: Cont
         const token = localStorage.getItem("token");
 
         try {
-            const payload = {
+            const payload: {
+                link: string;
+                title: string;
+                type: ContentType;
+                tags: string[];
+                appName?: string;
+            } = {
                 link,
                 title,
                 type,
                 tags: tagList
             };
+
+            if (type === "other" && appName.trim()) {
+                payload.appName = appName.trim();
+            }
 
             const headers: Record<string, string> = {
                 "Authorization": `Bearer ${token}`,
@@ -183,9 +193,10 @@ export function ContentModal({open, onClose, onSuccess, editMode, content}: Cont
                     <div>
                         <label htmlFor="content-title" className="block text-xs uppercase tracking-wider text-stone-500 mb-2">Title</label>
                         <input 
-                            ref={titleRef}
                             id="content-title"
                             type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
                             aria-required="true"
                             className="w-full border-b border-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors bg-transparent break-words" 
                         />
@@ -193,9 +204,10 @@ export function ContentModal({open, onClose, onSuccess, editMode, content}: Cont
                     <div>
                         <label htmlFor="content-link" className="block text-xs uppercase tracking-wider text-stone-500 mb-2">Link</label>
                         <input 
-                            ref={linkRef}
                             id="content-link"
                             type="url"
+                            value={link}
+                            onChange={(e) => setLink(e.target.value)}
                             aria-required="true"
                             className="w-full border-b border-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors bg-transparent break-all" 
                         />
@@ -203,9 +215,10 @@ export function ContentModal({open, onClose, onSuccess, editMode, content}: Cont
                     <div>
                         <label htmlFor="content-tags" className="block text-xs uppercase tracking-wider text-stone-500 mb-2">Tags</label>
                         <input 
-                            ref={tagsRef}
                             id="content-tags"
                             type="text"
+                            value={tags}
+                            onChange={(e) => setTags(e.target.value)}
                             placeholder="tech, music"
                             aria-describedby="tags-hint"
                             className="w-full border-b border-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors bg-transparent" 
@@ -234,6 +247,20 @@ export function ContentModal({open, onClose, onSuccess, editMode, content}: Cont
                         ))}
                     </div>
                 </div>
+
+                {type === "other" && (
+                    <div className="mt-4">
+                        <label htmlFor="content-appname" className="block text-xs uppercase tracking-wider text-stone-500 mb-2">App Name</label>
+                        <input 
+                            id="content-appname"
+                            type="text"
+                            value={appName}
+                            onChange={(e) => setAppName(e.target.value)}
+                            placeholder="TikTok, Notion, Figma..."
+                            className="w-full border-b border-stone-200 py-3 text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors bg-transparent" 
+                        />
+                    </div>
+                )}
                 
                 {error && (
                     <p className="text-red-600 text-sm mt-4">{error}</p>

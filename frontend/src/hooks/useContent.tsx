@@ -7,7 +7,8 @@ export interface Content {
     contentId: string;
     title: string;
     link: string;
-    type: "youtube" | "twitter" | "instagram" | "reddit" | "github" | "linkedin" | "spotify" | "soundcloud" | "loom";
+    type: "youtube" | "twitter" | "instagram" | "reddit" | "github" | "linkedin" | "spotify" | "soundcloud" | "loom" | "other";
+    appName?: string;
     tags: { title: string }[];
     userId: string;
 }
