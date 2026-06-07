@@ -112,6 +112,12 @@ export const QdrantDelete = async(userId: string, contentId: string) => {
     const collectionName = getCollectionName(userId);
 
     try{
+        const collections = await client.getCollections();
+        const exists = collections.collections.some(c => c.name === collectionName);
+        if (!exists) {
+            return;
+        }
+
         await client.delete(collectionName, {
             points: [contentId]
         })
