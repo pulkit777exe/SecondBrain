@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import DOMPurify from "dompurify";
 import { ContentType } from "../shared/contentTypes";
+import { BACKEND_URL } from "../config";
 
-const oembedCache = new Map<string, string>();
+const oembedCache = new Map<string, { html: string; thumbnail: string | null }>();
+const previewCache = new Map<string, { image: string | null; title: string | null; description: string | null }>();
 import { DeleteIcon } from "../icons/DeleteIcon";
 import { ShareIcon } from "../icons/ShareIcon";
 import { YoutubeIcon } from "../icons/YoutubeIcon";
@@ -60,7 +62,7 @@ function getColor(type: ContentType) {
 function getPlatformUrl(url: string, type: ContentType): string {
     switch (type) {
         case "twitter":
-            return url.replace("x.com", "twitter.com");
+            return url.includes("x.com") ? url : url.replace("twitter.com", "x.com");
         case "instagram":
             return url.includes("instagram.com") ? url : `https://www.instagram.com/${url.replace(/[^a-zA-Z0-9._]/g, "")}`;
         case "reddit":
@@ -94,22 +96,24 @@ function getEmbedUrl(url: string, type: ContentType): string | null {
 
 function getOembedUrl(url: string, type: ContentType): string | null {
     if (type === "twitter") {
-        const match = url.match(/twitter\.com\/([^\/]+)\/status\/(\d+)/);
-        if (match) return `https://publish.twitter.com/oembed?url=https://twitter.com/${match[1]}/status/${match[2]}&hide_media=false`;
+        const match = url.match(/(?:twitter\.com|x\.com)\/([^\/]+)\/status\/(\d+)/);
+        if (match) return `${BACKEND_URL}/v1/oembed?url=${encodeURIComponent(url)}&type=twitter`;
     }
     if (type === "reddit") {
         const match = url.match(/reddit\.com\/r\/([^\/]+)\/comments\/([a-z0-9]+)/i);
-        if (match) return `https://www.reddit.com/oembed?url=https://www.reddit.com/r/${match[1]}/comments/${match[2]}/`;
+        if (match) return `${BACKEND_URL}/v1/oembed?url=${encodeURIComponent(url)}&type=reddit`;
     }
     if (type === "instagram") {
         const match = url.match(/instagram\.com\/p\/([a-zA-Z0-9_-]+)/);
-        if (match) return `https://api.instagram.com/oembed?url=https://www.instagram.com/p/${match[1]}/`;
+        if (match) return `${BACKEND_URL}/v1/oembed?url=${encodeURIComponent(url)}&type=instagram`;
     }
     return null;
 }
 
 function CardComponent({title, link, type, contentId, appName, tags, onDelete, onEdit}: CardProps) {
     const [oembedHtml, setOembedHtml] = useState("");
+    const [thumbnail, setThumbnail] = useState<string | null>(null);
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
     const embedUrl = getEmbedUrl(link, type);
@@ -120,7 +124,8 @@ function CardComponent({title, link, type, contentId, appName, tags, onDelete, o
         
         const cached = oembedCache.get(oembedUrl);
         if (cached) {
-            setOembedHtml(cached);
+            setOembedHtml(cached.html);
+            setThumbnail(cached.thumbnail);
             return;
         }
         
@@ -130,13 +135,36 @@ function CardComponent({title, link, type, contentId, appName, tags, onDelete, o
                 .then(res => res.json())
                 .then(data => {
                     const html = (data.html || "").replace(/<script[\s\S]*?<\/script>/gi, "");
-                    oembedCache.set(oembedUrl, html);
+                    const thumb = data.thumbnail || null;
+                    oembedCache.set(oembedUrl, { html, thumbnail: thumb });
                     setOembedHtml(html);
+                    setThumbnail(thumb);
                     setLoading(false);
                 })
                 .catch(() => setLoading(false));
         }
     }, [oembedUrl, oembedHtml]);
+
+    useEffect(() => {
+        if (oembedUrl || embedUrl) return;
+        if (type === "other" && !link) return;
+
+        const cached = previewCache.get(link);
+        if (cached) {
+            setPreviewImage(cached.image);
+            return;
+        }
+
+        setLoading(true);
+        fetch(`${BACKEND_URL}/v1/preview?url=${encodeURIComponent(link)}`)
+            .then(res => res.json())
+            .then(data => {
+                previewCache.set(link, { image: data.image, title: data.title, description: data.description });
+                setPreviewImage(data.image);
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+    }, [link, type, oembedUrl, embedUrl]);
 
     const getDisplayContent = () => {
         if (embedUrl) {
@@ -171,7 +199,17 @@ function CardComponent({title, link, type, contentId, appName, tags, onDelete, o
         if (oembedHtml) {
             const cleanHtml = DOMPurify.sanitize(oembedHtml);
             return (
-                <div dangerouslySetInnerHTML={{ __html: cleanHtml }} />
+                <div>
+                    <div dangerouslySetInnerHTML={{ __html: cleanHtml }} />
+                    {thumbnail && (
+                        <img 
+                            src={thumbnail} 
+                            alt={`Preview for ${title}`}
+                            className="w-full h-auto rounded-sm mt-2"
+                            loading="lazy"
+                        />
+                    )}
+                </div>
             );
         }
 
@@ -188,10 +226,21 @@ function CardComponent({title, link, type, contentId, appName, tags, onDelete, o
                 href={getPlatformUrl(link, type)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 py-6 text-sm text-stone-600 hover:text-stone-800 bg-stone-50"
+                className="flex flex-col items-center justify-center gap-2 py-6 text-sm text-stone-600 hover:text-stone-800 bg-stone-50"
             >
-                {getIcon(type)}
-                <span>View on {type === "other" && appName ? appName : type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                {previewImage ? (
+                    <img 
+                        src={previewImage} 
+                        alt={`Preview for ${title}`}
+                        className="w-full h-32 object-cover rounded-sm"
+                        loading="lazy"
+                    />
+                ) : (
+                    <>
+                        {getIcon(type)}
+                        <span>View on {type === "other" && appName ? appName : type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                    </>
+                )}
             </a>
         );
     };
