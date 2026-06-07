@@ -3,6 +3,8 @@ import express from 'express'
 import { UserRouter } from './routes/UserRouter'
 import { ContentRouter } from './routes/ContentRouter'
 import { BrainRouter } from './routes/BrainRouter'
+import { OembedRouter } from './routes/OembedRouter'
+import { PreviewRouter } from './routes/PreviewRouter'
 import cors from 'cors'
 
 const PORT = process.env.PORT || 3001;
@@ -17,6 +19,8 @@ app.use(express.json())
 app.use('/v1/user', UserRouter)
 app.use('/v1/content', ContentRouter)
 app.use('/v1/brain', BrainRouter)
+app.use('/v1/oembed', OembedRouter)
+app.use('/v1/preview', PreviewRouter)
 
 app.get('/', (req, res) => {
     res.status(200).json({
