@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import DOMPurify from "dompurify";
+import { ContentType } from "../shared/contentTypes";
 
 const oembedCache = new Map<string, string>();
 import { DeleteIcon } from "../icons/DeleteIcon";
@@ -14,13 +16,12 @@ import { SoundCloudIcon } from "../icons/SoundCloudIcon";
 import { LoomIcon } from "../icons/LoomIcon";
 import { EditIcon } from "../icons/EditIcon";
 
-type ContentType = "youtube" | "twitter" | "instagram" | "reddit" | "github" | "linkedin" | "spotify" | "soundcloud" | "loom";
-
 interface CardProps {
     title: string,
     link: string,
     type: ContentType,
     contentId: string,
+    appName?: string;
     tags?: { title: string }[];
     onDelete?: (contentId: string) => void
     onEdit?: (contentId: string) => void
@@ -37,6 +38,7 @@ function getIcon(type: ContentType) {
         case "spotify": return <SpotifyIcon />;
         case "soundcloud": return <SoundCloudIcon />;
         case "loom": return <LoomIcon />;
+        case "other": return <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>;
     }
 }
 
@@ -51,6 +53,7 @@ function getColor(type: ContentType) {
         case "spotify": return "bg-green-100";
         case "soundcloud": return "bg-orange-100";
         case "loom": return "bg-purple-100";
+        case "other": return "bg-stone-100";
     }
 }
 
@@ -105,7 +108,7 @@ function getOembedUrl(url: string, type: ContentType): string | null {
     return null;
 }
 
-function CardComponent({title, link, type, contentId, tags, onDelete, onEdit}: CardProps) {
+function CardComponent({title, link, type, contentId, appName, tags, onDelete, onEdit}: CardProps) {
     const [oembedHtml, setOembedHtml] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -166,8 +169,9 @@ function CardComponent({title, link, type, contentId, tags, onDelete, onEdit}: C
         }
 
         if (oembedHtml) {
+            const cleanHtml = DOMPurify.sanitize(oembedHtml);
             return (
-                <div dangerouslySetInnerHTML={{ __html: oembedHtml }} />
+                <div dangerouslySetInnerHTML={{ __html: cleanHtml }} />
             );
         }
 
@@ -187,7 +191,7 @@ function CardComponent({title, link, type, contentId, tags, onDelete, onEdit}: C
                 className="flex items-center justify-center gap-2 py-6 text-sm text-stone-600 hover:text-stone-800 bg-stone-50"
             >
                 {getIcon(type)}
-                <span>View on {type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                <span>View on {type === "other" && appName ? appName : type.charAt(0).toUpperCase() + type.slice(1)}</span>
             </a>
         );
     };
@@ -234,6 +238,10 @@ function CardComponent({title, link, type, contentId, tags, onDelete, onEdit}: C
                     <span className="text-stone-900 font-medium text-sm truncate">{title}</span>
                 </div>
 
+                {type === "other" && appName && (
+                    <div className="text-xs text-stone-400 mb-2">{appName}</div>
+                )}
+
                 {tags && tags.length > 0 && (
                     <div className="flex gap-1.5 flex-wrap">
                         {tags.slice(0, 4).map((tag, i) => (
@@ -260,6 +268,7 @@ export const Card = React.memo(CardComponent, (prevProps, nextProps) => {
         prevProps.link === nextProps.link &&
         prevProps.type === nextProps.type &&
         prevProps.contentId === nextProps.contentId &&
+        prevProps.appName === nextProps.appName &&
         prevProps.tags === nextProps.tags
     );
 });
