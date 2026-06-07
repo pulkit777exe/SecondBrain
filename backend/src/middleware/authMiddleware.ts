@@ -29,7 +29,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
         next();
     } catch (err) {
         console.error(err);
-        res.status(400).json({
+        res.status(401).json({
             message: "Can't verify token, Token rejected"
         });
         return;

@@ -46,7 +46,7 @@ ContentRouter.post("/", authMiddleware, async (req: Request, res: Response) => {
         });
 
         try {
-            await QdrantUpsertPoints({ title: data.title, contentId, tags });
+            await QdrantUpsertPoints(userId, { title: data.title, contentId, tags });
         } catch (qdrantErr) {
             console.warn("Qdrant upsert failed, content saved to MongoDB:", qdrantErr);
         }
@@ -123,7 +123,7 @@ ContentRouter.delete('/', authMiddleware, async (req: Request, res: Response) =>
 
         await ContentModel.deleteOne({ contentId, userId });
         try {
-            await QdrantDelete(contentId);
+            await QdrantDelete(userId, contentId);
         } catch (qdrantErr) {
             console.warn("Qdrant delete failed:", qdrantErr);
         }
@@ -170,7 +170,7 @@ ContentRouter.put('/', authMiddleware, async (req: Request, res: Response) => {
                 link: data.link,
                 type: data.type,
                 title: data.title,
-                tags: data.tags || [],
+                tags: ProcessTags(data.tags || []),
                 appName: data.appName || null,
             },
             { new: true }
@@ -183,7 +183,7 @@ ContentRouter.put('/', authMiddleware, async (req: Request, res: Response) => {
             return;
         }
 
-        await QdrantUpsertPoints({ title: data.title, contentId, tags: data.tags })
+        await QdrantUpsertPoints(userId, { title: data.title, contentId, tags: data.tags })
         res.status(200).json({
             message: "Content updated successfully",
             updatedContent,
@@ -210,8 +210,8 @@ ContentRouter.post('/search', authMiddleware, async(req, res) => {
             return;
         }
 
-        const queryEmbeddings = await getEmbeddings(searchQuery);
-        const response = await QdrantSearch(queryEmbeddings);
+        const queryEmbeddings = await getEmbeddings(searchQuery, 'search_query');
+        const response = await QdrantSearch(userId, queryEmbeddings);
         res.status(200).json({
             search: response
         });

@@ -7,7 +7,7 @@ import { BACKEND_URL } from "../config";
 import { CONTENT_TYPES } from "../shared/contentTypes";
 import axios from "axios";
 
-type FilterType = "all" | "youtube" | "twitter";
+type FilterType = "all" | "youtube" | "twitter" | "instagram" | "reddit" | "github" | "linkedin" | "spotify" | "soundcloud" | "loom" | "other";
 
 export default function Dashboard() {
   const [modalOpen, setModalOpen] = useState(false);

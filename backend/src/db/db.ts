@@ -18,7 +18,7 @@ const UserSchema = new Schema({
 
 const ContentSchema = new Schema(
   {
-    title: { type: String, requred: true },
+    title: { type: String, required: true },
     link: { type: String, required: true },
     type: { type: String, required: true, index: true },
     appName: { type: String },

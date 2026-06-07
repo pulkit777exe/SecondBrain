@@ -8,7 +8,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export const UserRouter = Router();
-const salt_rounds = 3;
+const salt_rounds = 10;
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -29,21 +29,28 @@ UserRouter.post('/register', async (req: Request, res: Response) => {
                 message: "Error in inputs",
                 errors: error.errors
             });
-        } else {
-            const hashPass = await bcrypt.hash(data.password, salt_rounds);
-            await UserModel.create({
-                email: data.email,
-                password: hashPass
-            })
-            res.status(200).json({
-                message: "User created"
-            })
+            return;
         }
-        } catch (err) {
-        console.error(err);
-        res.status(403).json({
-            message: "Registration failed"
+
+        const hashPass = await bcrypt.hash(data.password, salt_rounds);
+        await UserModel.create({
+            email: data.email,
+            password: hashPass
         })
+        res.status(200).json({
+            message: "User created"
+        })
+        } catch (err: any) {
+        console.error(err);
+        if (err?.code === 11000) {
+            res.status(409).json({
+                message: "An account with this email already exists"
+            });
+        } else {
+            res.status(500).json({
+                message: "Registration failed"
+            });
+        }
     }
 })
 
