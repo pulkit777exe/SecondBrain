@@ -16,13 +16,12 @@ const UserSchema = new Schema({
   password: { type: String, required: true },
 });
 
-export const contentTypes = ["images", "video", "article", "audio"] as const;
-
 const ContentSchema = new Schema(
   {
     title: { type: String, requred: true },
     link: { type: String, required: true },
     type: { type: String, required: true, index: true },
+    appName: { type: String },
     tags: [
       {
         tagId: {
@@ -45,20 +44,6 @@ const ContentSchema = new Schema(
 
 ContentSchema.index({ userId: 1, createdAt: -1 });
 
-const TagSchema = new Schema({
-    title: {
-        type: String,
-        required: true,
-        set: (a: string) => a.toLowerCase().trim(),
-        index: true
-    },
-    tagId: {
-        type: String, 
-        required: true,
-        unique: true
-    }
-})
-
 const LinkSchema = new Schema({
   hash: { type: String, required: true, index: true },
   userId: { type: mongoose.Types.ObjectId, ref: "User", required: true },
@@ -67,4 +52,3 @@ const LinkSchema = new Schema({
 export const UserModel = model("User", UserSchema);
 export const LinkModel = model("Links", LinkSchema);
 export const ContentModel = model("Content", ContentSchema);
-export const TagModel = model("Tags", TagSchema);

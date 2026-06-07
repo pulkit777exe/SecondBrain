@@ -25,6 +25,15 @@ BrainRouter.post("/share", authMiddleware, async (req: Request, res: Response) =
         }
 
         if (shareLink && userId) {
+            const existingLink = await LinkModel.findOne({ userId });
+            if (existingLink) {
+                res.status(200).json({
+                    message: `Share link enabled for ${existingLink.userId}`,
+                    link: existingLink.hash,
+                });
+                return;
+            }
+
             const hash = crypto.createHash("sha256").update(userId + Date.now()).digest("hex");
 
             const linkCreated = await LinkModel.findOneAndUpdate(
@@ -69,8 +78,6 @@ BrainRouter.get("/:shareLink", async(req:Request, res:Response)  => {
             const content = await ContentModel.find({
                 userId: collectionLink.userId.toString()
             })
-            .populate('tags', 'title')
-            .populate('userId', 'username')
             .limit(limit)
             .sort({ createdAt: -1 })
 
