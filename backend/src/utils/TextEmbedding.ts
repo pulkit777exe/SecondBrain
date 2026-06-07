@@ -7,7 +7,9 @@ const cohere = new CohereClient({
     token: process.env.COHERE_API_KEY
 })
 
-export const getEmbeddings = async (data: CleanedPayload | string): Promise<number[]> => {
+type InputType = 'search_document' | 'search_query';
+
+export const getEmbeddings = async (data: CleanedPayload | string, inputType: InputType = 'search_document'): Promise<number[]> => {
     let stagedData: string;
 
     if (typeof data === "string") {
@@ -17,13 +19,13 @@ export const getEmbeddings = async (data: CleanedPayload | string): Promise<numb
     }
 
     if (!stagedData) {
-        throw new Error("Staged data is empty, cannot genrate embeddings");
+        throw new Error("Staged data is empty, cannot generate embeddings");
     }
 
     try {
         const embed = await cohere.v2.embed({
             model: 'embed-english-v3.0',
-            inputType: 'search_document',
+            inputType,
             embeddingTypes: ['float'],
             texts: [stagedData]
         });
