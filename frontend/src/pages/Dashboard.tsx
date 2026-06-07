@@ -375,7 +375,7 @@ export default function Dashboard() {
               </button>
               <button 
                 onClick={() => handleDelete(showDeleteConfirm)}
-                className="flex-1 py-3 text-red-600 hover:bg-red-50 rounded-md transition-all"
+                className="flex-1 py-3 text-red-600 hover:bg-red-100 bg-red-50 rounded-md transition-all"
               >
                 Delete
               </button>
